@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="bs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ImageForge — WebP / AVIF konverter u browseru</title>
+<meta name="description" content="Besplatno konvertuj slike u WebP, AVIF, JPEG ili PNG direktno u browseru. Sve se radi lokalno, nijedan fajl se ne šalje na server.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚒️</text></svg>">
+<style>
+  :root {
+    --bg: #0a0c14;
+    --bg-2: #10131f;
+    --panel: #161a2a;
+    --panel-2: #1d2236;
+    --line: #262c42;
+    --text: #e8eaf2;
+    --muted: #949cb5;
+    --accent: #5b8cff;
+    --accent-2: #a06bff;
+    --green: #35d0a5;
+    --red: #ff6b6b;
+    --amber: #ffc44d;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background:
+      radial-gradient(1100px 600px at 12% -8%, #1c2547 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, #2a1a44 0%, transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  header { padding: 64px 0 32px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(135deg, rgba(91,140,255,.16), rgba(160,107,255,.16));
+    border: 1px solid rgba(91,140,255,.32);
+    color: #bcd0ff; border-radius: 999px;
+    padding: 6px 15px; font-size: 13px; font-weight: 600; letter-spacing: .2px;
+  }
+  .badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 10px var(--green); }
+  h1 { font-size: clamp(34px, 6vw, 56px); line-height: 1.08; margin: 20px 0 14px; letter-spacing: -1.2px; }
+  h1 .grad {
+    background: linear-gradient(120deg, var(--accent), var(--accent-2) 55%, #ff8ad8);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lede { font-size: clamp(16px, 2.2vw, 19px); color: var(--muted); max-width: 62ch; }
+  .head-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 26px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    border: 1px solid var(--line); background: var(--panel); color: var(--text);
+    padding: 11px 18px; border-radius: 11px; font-size: 14px; font-weight: 600;
+    cursor: pointer; text-decoration: none; transition: .16s ease;
+  }
+  .btn:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .btn.primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-color: transparent; color: #fff;
+  }
+  .btn.primary:hover { filter: brightness(1.1); }
+
+  .privacy {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    margin-top: 18px; font-size: 14px; color: var(--muted);
+  }
+  .privacy b { color: var(--green); font-weight: 600; }
+
+  main { padding-bottom: 40px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 22px;
+  }
+
+  /* Dropzone */
+  #drop {
+    border: 2px dashed var(--line); border-radius: var(--radius);
+    padding: 46px 24px; text-align: center; cursor: pointer;
+    transition: .18s ease; background: var(--bg-2);
+  }
+  #drop:hover, #drop.over { border-color: var(--accent); background: rgba(91,140,255,.07); }
+  #drop .icon { font-size: 40px; line-height: 1; }
+  #drop h3 { font-size: 19px; margin: 14px 0 6px; }
+  #drop p { color: var(--muted); font-size: 14px; }
+  #drop .mini { margin-top: 12px; font-size: 13px; color: var(--accent); font-weight: 600; }
+
+  /* Controls */
+  .controls {
+    display: grid; gap: 20px; margin-top: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .field label {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-size: 13px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .6px; margin-bottom: 9px;
+  }
+  .field label .val {
+    color: var(--text); font-size: 14px; font-variant-numeric: tabular-nums;
+    text-transform: none; letter-spacing: 0;
+  }
+  select, input[type="number"] {
+    width: 100%; background: var(--bg-2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 10px;
+    padding: 10px 12px; font-size: 15px; font-family: inherit;
+  }
+  select:focus, input:focus { outline: 2px solid rgba(91,140,255,.55); outline-offset: 1px; }
+  select:disabled { opacity: .45; }
+  input[type="range"] { width: 100%; accent-color: var(--accent); height: 30px; cursor: pointer; }
+  .hint { font-size: 12.5px; color: var(--muted); margin-top: 7px; line-height: 1.45; }
+  .checkbox { display: flex; align-items: center; gap: 10px; font-size: 14px; margin-top: 2px; }
+  .checkbox input { width: 17px; height: 17px; accent-color: var(--accent); }
+
+  .unsupported {
+    margin-top: 12px; font-size: 13.5px; color: var(--amber);
+    background: rgba(255,196,77,.09); border: 1px solid rgba(255,196,77,.28);
+    padding: 9px 13px; border-radius: 9px; display: none;
+  }
+
+  /* Summary */
+  #summary {
+    display: none; margin-top: 20px;
+    background: linear-gradient(135deg, rgba(91,140,255,.12), rgba(160,107,255,.09));
+    border: 1px solid rgba(91,140,255,.3);
+    border-radius: var(--radius); padding: 20px 22px;
+  }
+  #summary.show { display: block; }
+  .stats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .stat .k {
+    font-size: 11.5px; text-transform: uppercase; letter-spacing: .7px;
+    color: var(--muted); font-weight: 700;
+  }
+  .stat .v { font-size: 25px; font-weight: 700; font-variant-numeric: tabular-nums; margin-top: 3px; }
+  .stat.good .v { color: var(--green); }
+  .stat.bad .v { color: var(--red); }
+  #summary .row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+
+  /* Results */
+  #results { display: grid; gap: 16px; margin-top: 20px; }
+  .item {
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 16px;
+    display: grid; gap: 16px; grid-template-columns: 108px 1fr auto; align-items: center;
+  }
+  .thumbs { display: grid; gap: 6px; }
+  .thumbs figure { margin: 0; }
+  .thumbs img {
+    width: 108px; height: 62px; object-fit: cover; display: block;
+    border-radius: 7px; border: 1px solid var(--line); background: #000;
+  }
+  .thumbs figcaption {
+    font-size: 10px; color: var(--muted); text-align: center;
+    text-transform: uppercase; letter-spacing: .5px; margin-top: 3px;
+  }
+  .meta { min-width: 0; }
+  .meta .name {
+    font-weight: 600; font-size: 15px; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap;
+  }
+  .meta .dims { font-size: 13px; color: var(--muted); margin-top: 3px; }
+  .bar {
+    height: 8px; border-radius: 999px; background: var(--panel-2);
+    overflow: hidden; margin-top: 11px; display: flex;
+  }
+  .bar i { display: block; height: 100%; }
+  .bar .after { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+  .sizes { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 9px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .sizes .from { color: var(--muted); text-decoration: line-through; }
+  .pill {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .pill.good { background: rgba(53,208,165,.15); color: var(--green); }
+  .pill.bad { background: rgba(255,107,107,.15); color: var(--red); }
+  .pill.warn { background: rgba(255,196,77,.15); color: var(--amber); }
+  .item .actions { display: grid; gap: 8px; }
+  .item .status { font-size: 13px; }
+
+  /* Terminal */
+  .term-section { margin-top: 64px; }
+  .term-section h2 { font-size: 26px; margin-bottom: 8px; letter-spacing: -.4px; }
+  .term-section .sub { color: var(--muted); margin-bottom: 20px; }
+  pre.term {
+    background: #05070e; border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 20px; overflow-x: auto; font-size: 13.5px; line-height: 1.65;
+    font-family: "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    color: #c9d1e8;
+  }
+  pre.term .p { color: var(--green); }
+  pre.term .c { color: #5c678c; }
+  pre.term .y { color: var(--accent); }
+
+  section.features { margin-top: 64px; }
+  section.features h2 { font-size: 26px; margin-bottom: 20px; letter-spacing: -.4px; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .feat { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+  .feat .ic { font-size: 22px; }
+  .feat h4 { margin: 9px 0 5px; font-size: 15.5px; }
+  .feat p { color: var(--muted); font-size: 14px; }
+
+  code.inline {
+    background: var(--panel-2); border: 1px solid var(--line);
+    padding: 1px 6px; border-radius: 5px; font-size: 13px;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+  }
+
+  footer {
+    border-top: 1px solid var(--line); margin-top: 60px; padding: 28px 0 44px;
+    color: var(--muted); font-size: 14px;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--text); }
+
+  @media (max-width: 720px) {
+    .item { grid-template-columns: 1fr; }
+    .item .actions { grid-auto-flow: column; justify-content: start; }
+    .thumbs { grid-auto-flow: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <span class="badge"><span class="dot"></span> Radi 100% u browseru · bez servera</span>
+    <h1>ImageForge<br><span class="grad">slike bez čekanja</span></h1>
+    <p class="lede">
+      Isti engine kao CLI alat — konvertuj JPEG, PNG, BMP, TIFF i GIF slike u
+      <b>WebP</b>, <b>AVIF</b>, <b>JPEG</b> ili <b>PNG</b>, sa automatskom
+      optimizacijom do zadate veličine fajla. Ništa se ne uploaduje.
+    </p>
+    <div class="head-actions">
+      <a class="btn primary" href="#try">Isprobaj odmah</a>
+      <a class="btn" href="https://github.com/Sebwebswiss/imageforge" target="_blank" rel="noopener">
+        ⭐ GitHub repo
+      </a>
+    </div>
+    <p class="privacy">
+      🔒 <span>Slike se čitaju iz tvog browsera i nikad ne napuštaju uređaj.</span>
+      <b>0 upload-a.</b>
+    </p>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+  <section id="try">
+    <div class="card">
+      <div id="drop">
+        <div class="icon">🖼️</div>
+        <h3>Prevuci slike ovdje</h3>
+        <p>Ili klikni da izabereš jednu ili više slika</p>
+        <p class="mini">ili generiši testnu sliku jednim klikom 👇</p>
+      </div>
+      <input type="file" id="picker" accept="image/*" multiple hidden>
+
+      <div class="controls">
+        <div class="field">
+          <label for="format">Format izvoza</label>
+          <select id="format">
+            <option value="webp">WebP — najmanji za web</option>
+            <option value="avif">AVIF — još manji, sporiji</option>
+            <option value="jpeg">JPEG — univerzalna podrška</option>
+            <option value="png">PNG — bez gubitka kvaliteta</option>
+          </select>
+          <div class="hint" id="fmtHint">Podržava prozirnost (alpha)</div>
+          <div class="unsupported" id="fmtWarn"></div>
+        </div>
+
+        <div class="field">
+          <label for="width">Max širina <span class="val" id="widthVal">1200 px</span></label>
+          <input type="range" id="width" min="200" max="4000" step="20" value="1200">
+          <div class="hint">Slike šire od toga se automatski smanjuju, proporcije se čuvaju.</div>
+        </div>
+
+        <div class="field">
+          <label for="quality">Kvalitet <span class="val" id="qualityVal">80</span></label>
+          <input type="range" id="quality" min="10" max="100" step="1" value="80">
+          <div class="hint" id="qualityHint">WebP / AVIF / JPEG</div>
+        </div>
+
+        <div class="field">
+          <label for="maxSize">Ciljna veličina <span class="val" id="maxSizeVal">—</span></label>
+          <input type="number" id="maxSize" min="0" step="10" value="0" placeholder="npr. 100">
+          <div class="hint">0 = bez cilja. Inače se kvalitet i dimenzije automatski smanjuju dok fajl ne stane u zadati broj KB.</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="summary">
+      <div class="stats">
+        <div class="stat"><div class="k">Fajlova</div><div class="v" id="sCount">0</div></div>
+        <div class="stat"><div class="k">Prije</div><div class="v" id="sBefore">0 KB</div></div>
+        <div class="stat"><div class="k">Poslije</div><div class="v" id="sAfter">0 KB</div></div>
+        <div class="stat good"><div class="k">Ušteda</div><div class="v" id="sSaved">0 KB</div></div>
+        <div class="stat good"><div class="k">Procenat</div><div class="v" id="sPct">0%</div></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" id="downloadAll">⬇ Preuzmi sve</button>
+        <button class="btn" id="clear">🗑 Očisti</button>
+      </div>
+    </div>
+
+    <div id="results"></div>
+  </section>
+
+  <section class="term-section">
+    <h2>Ista stvar, u terminalu</h2>
+    <p class="sub">Ovaj demo je web sučelje za isti engine. Za rad na stotinama slika, CLI je brži.</p>
+    <pre class="term"><span class="c"># instalacija</span>
+git clone https://github.com/Sebwebswiss/imageforge.git
+cd imageforge
+pip install -e .
+
+<span class="c"># cijeli folder — pita koji format želiš</span>
+<span class="p">$</span> imageforge ./photos
+
+  <span class="p">✓</span>  hero.jpg → hero.webp  89.2 KB  <span class="y">(-96.2%)</span>
+  <span class="p">✓</span>  logo.png → logo.webp  12.4 KB  <span class="y">(-94.1%)</span>
+  <span class="p">✓</span>  team.jpg → team.webp  128.4 KB <span class="y">(-89.7%)</span>
+
+──────────────────────────────────────────────────
+  Summary
+──────────────────────────────────────────────────
+  Converted:  3  │  Skipped:  0  │  Failed:  0
+  Original:   8,450 KB (8.3 MB)
+  Final:      276 KB (0.3 MB)
+  Saved:      8,174 KB (8.0 MB)
+
+<span class="c"># ili eksplicitno, za skripte i CI (bez pitanja)</span>
+<span class="p">$</span> imageforge ./photos --format avif --max-size 100 --recursive
+
+<span class="c"># opcije</span>
+  --format {webp,avif,jpeg,png}   format izvoza
+  -o, --output PATH               izlazni folder
+  -w, --width PX                  max širina (default 1200)
+  -q, --quality 1-100             kvalitet (default 80)
+  -s, --max-size KB               ciljna veličina fajla
+  -r, --recursive                 uključi podfoldere
+  -f, --force                     konvertuj ponovo postojeće</pre>
+  </section>
+
+  <section class="features">
+    <h2>Zašto radi</h2>
+    <div class="grid">
+      <div class="feat">
+        <div class="ic">⚡</div>
+        <h4>Automatska optimizacija veličine</h4>
+        <p>Zadaš „maksimum 100 KB" i engine spušta kvalitet, a zatim i dimenzije dok fajl ne stane. U memoriji, bez temp fajlova.</p>
+      </div>
+      <div class="feat">
+        <div class="ic">📐</div>
+        <h4>EXIF orijentacija</h4>
+        <p>Fotografije s telefona se više ne prikazuju rotirane — orijentacija se primjenjuje prije skaliranja.</p>
+      </div>
+      <div class="feat">
+        <div class="ic">🪟</div>
+        <h4>Prozirnost</h4>
+        <p>WebP, AVIF i PNG zadržavaju alpha kanal. JPEG je spljošten na bijelu pozadinu, jer drugačije ne može.</p>
+      </div>
+      <div class="feat">
+        <div class="ic">📦</div>
+        <h4>Batch i rekurzija</h4>
+        <p>Cijeli folder strukture u jednoj komandi. Već obrađene datoteke se preskaču, osim ako ne dodaš <code class="inline">--force</code>.</p>
+      </div>
+      <div class="feat">
+        <div class="ic">🔌</div>
+        <h4>Python API</h4>
+        <p><code class="inline">convert_image()</code> i <code class="inline">convert_directory()</code> su obične funkcije — koristi ih u svom kodu.</p>
+      </div>
+      <div class="feat">
+        <div class="ic">🛡️</div>
+        <h4>Privatnost po difoltu</h4>
+        <p>Ništa ne ide na server. Ovo je demo za browser; CLI radi lokalno na tvom disku.</p>
+      </div>
+    </div>
+  </section>
+</div>
+</main>
+
+<footer>
+  <div class="wrap" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%">
+    <span>ImageForge — MIT licencira, napravio Sebastien Zunec</span>
+    <span>
+      <a href="https://github.com/Sebwebswiss/imageforge" target="_blank" rel="noopener">GitHub</a> ·
+      <a href="https://github.com/Sebwebswiss/imageforge/issues" target="_blank" rel="noopener">Issues</a> ·
+      <a href="https://github.com/Sebwebswiss/imageforge#readme" target="_blank" rel="noopener">Dokumentacija</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+(function () {
+  "use strict";
+
+  var FORMATS = {
+    webp: { mime: "image/webp", ext: "webp", label: "WebP", alpha: true,  hint: "Podržava prozirnost (alpha)" },
+    avif: { mime: "image/avif", ext: "avif", label: "AVIF", alpha: true,  hint: "Podržava prozirnost (alpha). Najbolji omjer, ali kodiranje je sporije." },
+    jpeg: { mime: "image/jpeg", ext: "jpg", label: "JPEG", alpha: false, hint: "Bez prozirnosti — slika se spljoštena na bijelu pozadinu." },
+    png:  { mime: "image/png",  ext: "png",  label: "PNG",  alpha: true,  hint: "Bez gubitka kvaliteta. Kvalitet slidera se ignoriše." }
+  };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var drop = $("drop"), picker = $("picker"), results = $("results"), summary = $("summary");
+  var items = [];
+
+  function fmtBytes(b) {
+    if (b < 1024) return b + " B";
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + " KB";
+    return (b / 1048576).toFixed(2) + " MB";
+  }
+
+  function extOf(name) {
+    var m = /\.([a-z0-9]+)$/i.exec(name);
+    return m ? m[1].toLowerCase() : "";
+  }
+
+  /* ---- format support detection ---- */
+  var supported = {};
+  function detect() {
+    var c = document.createElement("canvas");
+    c.width = c.height = 8;
+    var keys = Object.keys(FORMATS);
+    var pending = keys.length;
+    keys.forEach(function (k) {
+      c.toBlob(function (blob) {
+        supported[k] = !!blob && blob.type === FORMATS[k].mime;
+        if (--pending === 0) applySupport();
+      }, FORMATS[k].mime, 0.8);
+    });
+  }
+  function applySupport() {
+    var sel = $("format"), warn = $("fmtWarn"), unsupported = [];
+    Object.keys(FORMATS).forEach(function (k) {
+      if (supported[k]) { sel.querySelector('option[value="' + k + '"]').disabled = false; return; }
+      sel.querySelector('option[value="' + k + '"]').disabled = true;
+      unsupported.push(k.toUpperCase());
+    });
+    if (!supported[sel.value]) {
+      var first = Object.keys(FORMATS).filter(function (k) { return supported[k]; })[0];
+      if (first) sel.value = first;
+    }
+    if (unsupported.length) {
+      warn.style.display = "block";
+      warn.textContent = "Ovaj browser ne podržava kodiranje u: " + unsupported.join(", ") + ". Koristi Chrome, Edge ili Firefox 90+.";
+    }
+    syncFormat();
+  }
+  function syncFormat() {
+    var f = FORMATS[$("format").value];
+    $("fmtHint").textContent = f.hint;
+    var q = $("quality");
+    q.disabled = f.ext === "png";
+    $("qualityHint").textContent = f.ext === "png" ? "PNG je bez gubitka — slider je onemogućen" : f.label + " / JPEG";
+  }
+
+  /* ---- canvas helpers ---- */
+  function render(bitmap, maxW, keepAlpha) {
+    var w = bitmap.width, h = bitmap.height;
+    if (w > maxW) { h = Math.round(h * (maxW / w)); w = maxW; }
+    var c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    var ctx = c.getContext("2d");
+    if (!keepAlpha) { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, w, h); }
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    return c;
+  }
+
+  function toBlob(canvas, mime, quality) {
+    return new Promise(function (res) { canvas.toBlob(function (b) { res(b); }, mime, quality); });
+  }
+
+  var yieldToUI = function () { return new Promise(function (r) { setTimeout(r, 0); }); };
+
+  async function encodeOne(file, opts) {
+    var fmt = FORMATS[opts.format];
+    var bitmap = await createImageBitmap(file);
+    var out;
+
+    if (opts.maxSize > 0 && fmt.ext !== "png") {
+      var width = Math.min(opts.width, bitmap.width);
+      var quality = opts.quality;
+      var best = null, steps = 0;
+      for (;;) {
+        var canvas = render(bitmap, width, fmt.alpha);
+        var blob = await toBlob(canvas, fmt.mime, quality);
+        var kb = blob.size / 1024;
+        if (kb <= opts.maxSize) { out = { blob: blob, w: width, h: canvas.height, quality: quality }; break; }
+        if (!best || blob.size < best.blob.size) {
+          best = { blob: blob, w: width, h: canvas.height, quality: quality };
+        }
+        if (++steps % 3 === 0) await yieldToUI();
+        if (quality > 30) {
+          quality = Math.max(30, quality - 10);
+        } else if (width > 400) {
+          width = Math.max(400, Math.floor(width * 0.8));
+          quality = Math.min(opts.quality, 75);
+        } else { out = best; break; }
+      }
+    } else {
+      var c = render(bitmap, opts.width, fmt.alpha);
+      var b = await toBlob(c, fmt.mime, fmt.ext === "png" ? undefined : opts.quality / 100);
+      out = { blob: b, w: c.width, h: c.height, quality: opts.quality };
+    }
+
+    if (!out.blob) throw new Error("Browser nije uspio kodirati sliku.");
+    bitmap.close && bitmap.close();
+    return out;
+  }
+
+  function readAsDataURL(blob) {
+    return new Promise(function (res) {
+      var r = new FileReader();
+      r.onload = function () { res(r.result); };
+      r.readAsDataURL(blob);
+    });
+  }
+
+  /* ---- UI rendering ---- */
+  async function addFiles(files) {
+    var list = Array.prototype.slice.call(files).filter(function (f) {
+      return /^image\//.test(f.type) || ["jpg", "jpeg", "png", "bmp", "gif", "tif", "tiff", "webp", "avif"].indexOf(extOf(f.name)) > -1;
+    });
+    if (!list.length) return;
+
+    var opts = readOpts();
+    var fmt = FORMATS[opts.format];
+    var token = Date.now();
+    var node = document.createElement("div");
+    node.className = "card";
+    node.style.marginTop = "16px";
+    node.innerHTML = '<div class="status" style="color:var(--muted)">⏳ Obrada ' + list.length + " fajl(a)…</div>";
+    results.prepend(node);
+
+    for (var i = 0; i < list.length; i++) {
+      var file = list[i];
+      try {
+        var res = await encodeOne(file, opts);
+        var base = file.name.replace(/\.[^.]+$/, "");
+        var outName = base + "." + fmt.ext;
+        var rec = {
+          id: token + "-" + i,
+          name: outName,
+          origName: file.name,
+          origSize: file.size,
+          blob: res.blob,
+          w: res.w,
+          h: res.h,
+          quality: res.quality,
+          beforeUrl: URL.createObjectURL(file),
+          afterUrl: URL.createObjectURL(res.blob),
+          targetMissed: opts.maxSize > 0 && res.blob.size / 1024 > opts.maxSize
+        };
+        items.push(rec);
+        await renderItem(rec, node);
+      } catch (err) {
+        items.push({
+          id: token + "-" + i, error: String(err && err.message || err),
+          origName: file.name, origSize: file.size, beforeUrl: URL.createObjectURL(file), blob: null
+        });
+        await renderItem(items[items.length - 1], node);
+      }
+      updateSummary();
+    }
+    node.remove();
+  }
+
+  async function renderItem(rec, anchor) {
+    var pct = rec.blob ? (1 - rec.blob.size / rec.origSize) * 100 : 0;
+    var ratioW = rec.blob ? Math.max(2, Math.min(100, (rec.blob.size / rec.origSize) * 100)) : 0;
+    var pillClass = rec.error ? "warn" : pct >= 50 ? "good" : pct > 0 ? "warn" : "bad";
+    var pillText = rec.error ? "greška"
+      : (pct >= 0 ? "-" + pct.toFixed(1) + "%" : "+" + Math.abs(pct).toFixed(1) + "%");
+
+    var el = document.createElement("div");
+    el.className = "item";
+    el.dataset.id = rec.id;
+    el.innerHTML =
+      '<div class="thumbs">' +
+        '<figure><img src="' + rec.beforeUrl + '" alt="prije"><figcaption>prije</figcaption></figure>' +
+        (rec.blob ? '<figure><img src="' + rec.afterUrl + '" alt="poslije"><figcaption>poslije</figcaption></figure>' : "") +
+      '</div>' +
+      '<div class="meta">' +
+        '<div class="name" title="' + (rec.name || rec.origName) + '">' + (rec.name || rec.origName) + '</div>' +
+        (rec.blob
+          ? '<div class="dims">' + rec.w + "×" + rec.h + " · " + fmtBytes(rec.origSize) + " → " + fmtBytes(rec.blob.size) +
+            (rec.targetMissed ? ' · <span style="color:var(--amber)">cilj ' + $("maxSize").value + ' KB nije dostignut</span>' : "") + '</div>' +
+            '<div class="bar"><i class="after" style="width:' + ratioW + '%"></i></div>'
+          : '<div class="dims" style="color:var(--red)">' + rec.error + '</div>') +
+      '</div>' +
+      '<div class="actions">' +
+        (rec.blob ? '<span class="pill ' + pillClass + '">' + pillText + "</span>" : "") +
+        (rec.blob ? '<button class="btn" data-dl="' + rec.id + '">⬇ Preuzmi</button>' : "") +
+      '</div>';
+
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.insertBefore(el, anchor);
+    } else {
+      results.prepend(el);
+    }
+    return el;
+  }
+
+  function updateSummary() {
+    var ok = items.filter(function (i) { return i.blob; });
+    if (!items.length) { summary.classList.remove("show"); return; }
+    var before = items.reduce(function (a, i) { return a + i.origSize; }, 0);
+    var after = ok.reduce(function (a, i) { return a + i.blob.size; }, 0);
+    var saved = before - after;
+    var pct = before ? (saved / before) * 100 : 0;
+
+    $("sCount").textContent = ok.length + (items.length - ok.length ? " / " + items.length : "");
+    $("sBefore").textContent = fmtBytes(before);
+    $("sAfter").textContent = fmtBytes(after);
+    $("sSaved").textContent = (saved >= 0 ? "" : "+") + fmtBytes(Math.abs(saved));
+    $("sPct").textContent = (pct >= 0 ? "" : "+") + Math.abs(pct).toFixed(1) + "%";
+    $("sPct").parentNode.className = "stat " + (pct >= 0 ? "good" : "bad");
+    summary.classList.add("show");
+  }
+
+  function readOpts() {
+    return {
+      format: $("format").value,
+      width: parseInt($("width").value, 10),
+      quality: parseInt($("quality").value, 10),
+      maxSize: Math.max(0, parseInt($("maxSize").value, 10) || 0)
+    };
+  }
+
+  function clearAll() {
+    items.forEach(function (i) {
+      URL.revokeObjectURL(i.beforeUrl);
+      if (i.afterUrl) URL.revokeObjectURL(i.afterUrl);
+    });
+    items = [];
+    results.innerHTML = "";
+    summary.classList.remove("show");
+  }
+
+  /* ---- events ---- */
+  drop.addEventListener("click", function () { picker.click(); });
+
+  picker.addEventListener("change", function () { addFiles(picker.files); picker.value = ""; });
+
+  ["dragenter", "dragover"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.add("over"); });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    drop.addEventListener(ev, function (e) { e.preventDefault(); drop.classList.remove("over"); });
+  });
+  drop.addEventListener("drop", function (e) {
+    if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+  });
+
+  $("width").addEventListener("input", function () { $("widthVal").textContent = this.value + " px"; });
+  $("quality").addEventListener("input", function () { $("qualityVal").textContent = this.value; });
+  $("maxSize").addEventListener("input", function () {
+    $("maxSizeVal").textContent = this.value > 0 ? this.value + " KB" : "—";
+  });
+  $("format").addEventListener("change", syncFormat);
+
+  $("clear").addEventListener("click", clearAll);
+
+  $("downloadAll").addEventListener("click", function () {
+    items.filter(function (i) { return i.blob; }).forEach(function (i, idx) {
+      setTimeout(function () {
+        var a = document.createElement("a");
+        a.href = i.afterUrl;
+        a.download = i.name;
+        a.click();
+      }, idx * 220);
+    });
+  });
+
+  results.addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-dl]");
+    if (!btn) return;
+    var rec = items.filter(function (i) { return i.id === btn.dataset.dl; })[0];
+    if (!rec) return;
+    var a = document.createElement("a");
+    a.href = rec.afterUrl;
+    a.download = rec.name;
+    a.click();
+  });
+
+  /* ---- sample image so the page is usable immediately ---- */
+  function sampleImage() {
+    var c = document.createElement("canvas");
+    c.width = 1600; c.height = 1000;
+    var x = c.getContext("2d");
+    var g = x.createLinearGradient(0, 0, 1600, 1000);
+    g.addColorStop(0, "#1b2a5e"); g.addColorStop(.5, "#4a2f7a"); g.addColorStop(1, "#0d4a52");
+    x.fillStyle = g; x.fillRect(0, 0, 1600, 1000);
+    for (var i = 0; i < 90; i++) {
+      x.beginPath();
+      x.fillStyle = "hsla(" + (i * 37 % 360) + ",85%,65%," + (0.12 + (i % 5) * 0.05) + ")";
+      x.arc((i * 173) % 1600, (i * 271) % 1000, 20 + (i % 7) * 14, 0, Math.PI * 2);
+      x.fill();
+    }
+    x.fillStyle = "rgba(255,255,255,.94)";
+    x.font = "700 96px -apple-system, Segoe UI, Roboto, sans-serif";
+    x.fillText("ImageForge", 90, 520);
+    x.fillStyle = "rgba(255,255,255,.62)";
+    x.font = "400 38px -apple-system, Segoe UI, Roboto, sans-serif";
+    x.fillText("generisana testna slika · 1600×1000", 92, 590);
+    return new Promise(function (res) {
+      c.toBlob(function (b) { res(new File([b], "sample-1600x1000.png", { type: "image/png" })); }, "image/png");
+    });
+  }
+
+  $("drop").insertAdjacentHTML("beforeend",
+    '<button class="btn" id="genSample" style="margin-top:16px">✨ Generiši testnu sliku</button>');
+  $("genSample").addEventListener("click", function (e) {
+    e.stopPropagation();
+    sampleImage().then(function (f) { addFiles([f]); });
+  });
+
+  detect();
+  syncFormat();
+})();
+</script>
+</body>
+</html>
