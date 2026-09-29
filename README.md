@@ -36,6 +36,7 @@ Modern image formats are **25-35% smaller** than JPEG/PNG at similar quality. Im
 - **Memory efficient** — uses in-memory buffers for fast optimization (no temp files)
 - **Python API** — use as a library in your own projects
 - **Web demo** — client-side converter, no server, no upload
+- **ZIP download** — one archive for a whole batch, or save each file separately
 
 ---
 

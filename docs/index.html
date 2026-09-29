@@ -87,6 +87,9 @@
   #drop h3 { font-size: 19px; margin: 14px 0 6px; }
   #drop p { color: var(--muted); font-size: 14px; }
   #drop .mini { margin-top: 12px; font-size: 13px; color: var(--accent); font-weight: 600; }
+  .drop-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 18px; }
+  .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; border-color: var(--line); }
+  .btn:disabled:hover { border-color: var(--line); }
 
   /* Controls */
   .controls {
@@ -111,8 +114,8 @@
   select:disabled { opacity: .45; }
   input[type="range"] { width: 100%; accent-color: var(--accent); height: 30px; cursor: pointer; }
   .hint { font-size: 12.5px; color: var(--muted); margin-top: 7px; line-height: 1.45; }
-  .checkbox { display: flex; align-items: center; gap: 10px; font-size: 14px; margin-top: 2px; }
-  .checkbox input { width: 17px; height: 17px; accent-color: var(--accent); }
+  .checkbox { display: flex; align-items: center; gap: 10px; font-size: 14px; margin-top: 2px; padding: 8px 0; cursor: pointer; }
+  .checkbox input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
 
   .unsupported {
     margin-top: 12px; font-size: 13.5px; color: var(--amber);
@@ -257,6 +260,7 @@
         <p class="mini">ili generiraj testnu sliku jednim klikom 👇</p>
       </div>
       <input type="file" id="picker" accept="image/*" multiple hidden>
+      <input type="file" id="folderPicker" webkitdirectory directory multiple hidden>
 
       <div class="controls">
         <div class="field">
@@ -289,6 +293,11 @@
           <div class="hint">0 = bez cilja. Inače se kvalitet i dimenzije automatski smanjuju dok datoteka ne stane u zadani broj KB.</div>
         </div>
       </div>
+
+      <label class="checkbox" style="margin-top:18px">
+        <input type="checkbox" id="autoZip">
+        <span>Automatski preuzmi ZIP čim konverzija završi (ako je više od jedne slike)</span>
+      </label>
     </div>
 
     <div id="summary">
@@ -300,9 +309,11 @@
         <div class="stat good"><div class="k">Postotak</div><div class="v" id="sPct">0%</div></div>
       </div>
       <div class="row">
-        <button class="btn primary" id="downloadAll">⬇ Preuzmi sve</button>
+        <button class="btn primary" id="downloadZip">🗜 Preuzmi ZIP</button>
+        <button class="btn" id="downloadAll">⬇ Spremi svaku pojedinačno</button>
         <button class="btn" id="clear">🗑 Očisti</button>
       </div>
+      <p class="hint" id="zipNote"></p>
     </div>
 
     <div id="results"></div>
@@ -407,6 +418,110 @@ pip install -e .
   var $ = function (id) { return document.getElementById(id); };
   var drop = $("drop"), picker = $("picker"), results = $("results"), summary = $("summary");
   var items = [];
+  var zipBusy = false;
+
+  /* ---- minimal ZIP writer (STORE, no dependencies) ----
+     Images are already compressed, so storing them uncompressed inside the
+     archive costs nothing and keeps this file dependency-free. */
+  var CRC_TABLE = (function () {
+    var table = new Uint32Array(256);
+    for (var n = 0; n < 256; n++) {
+      var c = n;
+      for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      table[n] = c >>> 0;
+    }
+    return table;
+  })();
+
+  function crc32(bytes) {
+    var c = 0xFFFFFFFF;
+    for (var i = 0; i < bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  }
+
+  function dosDateTime(d) {
+    return {
+      time: ((d.getHours() & 31) << 11) | ((d.getMinutes() & 63) << 5) | ((d.getSeconds() / 2) & 31),
+      date: (((d.getFullYear() - 1980) & 127) << 9) | (((d.getMonth() + 1) & 15) << 5) | (d.getDate() & 31)
+    };
+  }
+
+  function uniqueNames(names) {
+    var seen = {};
+    return names.map(function (name) {
+      if (!seen[name]) { seen[name] = 1; return name; }
+      seen[name]++;
+      var dot = name.lastIndexOf(".");
+      var stem = dot > 0 ? name.slice(0, dot) : name;
+      var ext = dot > 0 ? name.slice(dot) : "";
+      var candidate = stem + " (" + seen[name] + ")" + ext;
+      while (seen[candidate]) { seen[name]++; candidate = stem + " (" + seen[name] + ")" + ext; }
+      seen[candidate] = 1;
+      return candidate;
+    });
+  }
+
+  function buildZip(entries) {
+    var encoder = new TextEncoder();
+    var parts = [], central = [], offset = 0;
+
+    entries.forEach(function (entry) {
+      var nameBytes = encoder.encode(entry.name);
+      var sum = crc32(entry.data);
+      var stamp = dosDateTime(entry.date || new Date());
+
+      var local = new Uint8Array(30 + nameBytes.length);
+      var lv = new DataView(local.buffer);
+      lv.setUint32(0, 0x04034b50, true);
+      lv.setUint16(4, 20, true);
+      lv.setUint16(6, 0x0800, true);
+      lv.setUint16(8, 0, true);
+      lv.setUint16(10, stamp.time, true);
+      lv.setUint16(12, stamp.date, true);
+      lv.setUint32(14, sum, true);
+      lv.setUint32(18, entry.data.length, true);
+      lv.setUint32(22, entry.data.length, true);
+      lv.setUint16(26, nameBytes.length, true);
+      local.set(nameBytes, 30);
+      parts.push(local, entry.data);
+
+      var cd = new Uint8Array(46 + nameBytes.length);
+      var cv = new DataView(cd.buffer);
+      cv.setUint32(0, 0x02014b50, true);
+      cv.setUint16(4, 20, true);
+      cv.setUint16(6, 20, true);
+      cv.setUint16(8, 0x0800, true);
+      cv.setUint16(10, 0, true);
+      cv.setUint16(12, stamp.time, true);
+      cv.setUint16(14, stamp.date, true);
+      cv.setUint32(16, sum, true);
+      cv.setUint32(20, entry.data.length, true);
+      cv.setUint32(24, entry.data.length, true);
+      cv.setUint16(28, nameBytes.length, true);
+      cv.setUint32(38, 0, true);
+      cv.setUint32(42, offset, true);
+      cd.set(nameBytes, 46);
+      central.push(cd);
+
+      offset += local.length + entry.data.length;
+    });
+
+    var centralSize = central.reduce(function (a, c) { return a + c.length; }, 0);
+    var end = new Uint8Array(22);
+    var ev = new DataView(end.buffer);
+    ev.setUint32(0, 0x06054b50, true);
+    ev.setUint16(8, entries.length, true);
+    ev.setUint16(10, entries.length, true);
+    ev.setUint32(12, centralSize, true);
+    ev.setUint32(16, offset, true);
+
+    var all = parts.concat(central, [end]);
+    var total = all.reduce(function (a, c) { return a + c.length; }, 0);
+    var out = new Uint8Array(total);
+    var pos = 0;
+    all.forEach(function (chunk) { out.set(chunk, pos); pos += chunk.length; });
+    return out;
+  }
 
   function fmtBytes(b) {
     if (b < 1024) return b + " B";
@@ -569,6 +684,10 @@ pip install -e .
       updateSummary();
     }
     node.remove();
+
+    if ($("autoZip").checked && items.filter(function (i) { return i.blob; }).length > 1) {
+      downloadZip();
+    }
   }
 
   async function renderItem(rec, anchor) {
@@ -621,7 +740,74 @@ pip install -e .
     $("sSaved").textContent = (saved >= 0 ? "" : "+") + fmtBytes(Math.abs(saved));
     $("sPct").textContent = (pct >= 0 ? "" : "+") + Math.abs(pct).toFixed(1) + "%";
     $("sPct").parentNode.className = "stat " + (pct >= 0 ? "good" : "bad");
+    updateZipButton();
     summary.classList.add("show");
+  }
+
+  function updateZipButton() {
+    var ok = items.filter(function (i) { return i.blob; });
+    var button = $("downloadZip");
+    var note = $("zipNote");
+    var totalBytes = ok.reduce(function (a, i) { return a + i.blob.size; }, 0);
+
+    button.disabled = ok.length === 0 || zipBusy;
+    button.textContent = zipBusy ? "⏳ Pakiranje…" : "🗜 Preuzmi ZIP";
+
+    if (!ok.length) {
+      note.textContent = "";
+    } else if (ok.length === 1) {
+      note.textContent = "Jedna slika — koristi „Spremi svaku pojedinačno” ili gumb za preuzimanje uz sliku.";
+    } else {
+      note.textContent = "ZIP sadrži " + ok.length + " datoteka, ukupno " + fmtBytes(totalBytes) +
+        ". Arhiva se pakuje bez ponovne kompresije jer su slike već komprimirane.";
+    }
+  }
+
+  function zipName() {
+    var d = new Date();
+    var stamp = d.getFullYear() +
+      String(d.getMonth() + 1).padStart(2, "0") +
+      String(d.getDate()).padStart(2, "0") + "-" +
+      String(d.getHours()).padStart(2, "0") +
+      String(d.getMinutes()).padStart(2, "0");
+    return "imageforge-" + $("format").value + "-" + stamp + ".zip";
+  }
+
+  async function downloadZip(silent) {
+    if (zipBusy) return;
+    var ok = items.filter(function (i) { return i.blob; });
+    if (!ok.length) return;
+
+    if (ok.length > 65535) {
+      $("zipNote").textContent = "Previše datoteka za jednu arhivu (" + ok.length + "). Koristi „Spremi svaku pojedinačno”.";
+      return;
+    }
+
+    zipBusy = true;
+    updateZipButton();
+    try {
+      var names = uniqueNames(ok.map(function (i) { return i.name; }));
+      var entries = [];
+      for (var i = 0; i < ok.length; i++) {
+        entries.push({ name: names[i], data: new Uint8Array(await ok[i].blob.arrayBuffer()) });
+        if (i % 8 === 0) await yieldToUI();
+      }
+      var bytes = buildZip(entries);
+      var blob = new Blob([bytes], { type: "application/zip" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = zipName();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
+    } catch (err) {
+      $("zipNote").textContent = "Greška pri pakiranju: " + (err && err.message ? err.message : err);
+    } finally {
+      zipBusy = false;
+      updateZipButton();
+    }
   }
 
   function readOpts() {
@@ -667,6 +853,8 @@ pip install -e .
 
   $("clear").addEventListener("click", clearAll);
 
+  $("downloadZip").addEventListener("click", function () { downloadZip(); });
+
   $("downloadAll").addEventListener("click", function () {
     items.filter(function (i) { return i.blob; }).forEach(function (i, idx) {
       setTimeout(function () {
@@ -676,6 +864,11 @@ pip install -e .
         a.click();
       }, idx * 220);
     });
+  });
+
+  $("folderPicker").addEventListener("change", function () {
+    addFiles($("folderPicker").files);
+    $("folderPicker").value = "";
   });
 
   results.addEventListener("click", function (e) {
@@ -708,21 +901,30 @@ pip install -e .
     x.fillText("ImageForge", 90, 520);
     x.fillStyle = "rgba(255,255,255,.62)";
     x.font = "400 38px -apple-system, Segoe UI, Roboto, sans-serif";
-    x.fillText("generisana testna slika · 1600×1000", 92, 590);
+    x.fillText("generirana testna slika · 1600×1000", 92, 590);
     return new Promise(function (res) {
       c.toBlob(function (b) { res(new File([b], "sample-1600x1000.png", { type: "image/png" })); }, "image/png");
     });
   }
 
   $("drop").insertAdjacentHTML("beforeend",
-    '<button class="btn" id="genSample" style="margin-top:16px">✨ Generiši testnu sliku</button>');
+    '<div class="drop-actions">' +
+      '<button class="btn" id="genSample">✨ Generiraj testnu sliku</button>' +
+      '<button class="btn" id="pickFolder">📁 Odaberi mapu</button>' +
+    '</div>');
+
   $("genSample").addEventListener("click", function (e) {
     e.stopPropagation();
     sampleImage().then(function (f) { addFiles([f]); });
   });
+  $("pickFolder").addEventListener("click", function (e) {
+    e.stopPropagation();
+    $("folderPicker").click();
+  });
 
   detect();
   syncFormat();
+  updateZipButton();
 })();
 </script>
 </body>
