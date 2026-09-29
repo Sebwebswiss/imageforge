@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ImageForge — WebP / AVIF konverter u browseru</title>
-<meta name="description" content="Besplatno konvertuj slike u WebP, AVIF, JPEG ili PNG direktno u browseru. Sve se radi lokalno, nijedan fajl se ne šalje na server.">
+<meta name="description" content="Besplatno konvertuj slike u WebP, AVIF, JPEG ili PNG direktno u browseru. Sve se radi lokalno, nijedna datoteka se ne šalje na server.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚒️</text></svg>">
 <style>
   :root {
@@ -231,7 +231,7 @@
     <p class="lede">
       Isti engine kao CLI alat — konvertuj JPEG, PNG, BMP, TIFF i GIF slike u
       <b>WebP</b>, <b>AVIF</b>, <b>JPEG</b> ili <b>PNG</b>, sa automatskom
-      optimizacijom do zadate veličine fajla. Ništa se ne uploaduje.
+      optimizacijom do zadane veličine datoteke. Ništa se ne uploaduje.
     </p>
     <div class="head-actions">
       <a class="btn primary" href="#try">Isprobaj odmah</a>
@@ -252,9 +252,9 @@
     <div class="card">
       <div id="drop">
         <div class="icon">🖼️</div>
-        <h3>Prevuci slike ovdje</h3>
-        <p>Ili klikni da izabereš jednu ili više slika</p>
-        <p class="mini">ili generiši testnu sliku jednim klikom 👇</p>
+        <h3>Povuci slike ovamo</h3>
+        <p>Ili klikni i odaberi jednu ili više slika</p>
+        <p class="mini">ili generiraj testnu sliku jednim klikom 👇</p>
       </div>
       <input type="file" id="picker" accept="image/*" multiple hidden>
 
@@ -286,18 +286,18 @@
         <div class="field">
           <label for="maxSize">Ciljna veličina <span class="val" id="maxSizeVal">—</span></label>
           <input type="number" id="maxSize" min="0" step="10" value="0" placeholder="npr. 100">
-          <div class="hint">0 = bez cilja. Inače se kvalitet i dimenzije automatski smanjuju dok fajl ne stane u zadati broj KB.</div>
+          <div class="hint">0 = bez cilja. Inače se kvalitet i dimenzije automatski smanjuju dok datoteka ne stane u zadani broj KB.</div>
         </div>
       </div>
     </div>
 
     <div id="summary">
       <div class="stats">
-        <div class="stat"><div class="k">Fajlova</div><div class="v" id="sCount">0</div></div>
+        <div class="stat"><div class="k">Datoteka</div><div class="v" id="sCount">0</div></div>
         <div class="stat"><div class="k">Prije</div><div class="v" id="sBefore">0 KB</div></div>
         <div class="stat"><div class="k">Poslije</div><div class="v" id="sAfter">0 KB</div></div>
         <div class="stat good"><div class="k">Ušteda</div><div class="v" id="sSaved">0 KB</div></div>
-        <div class="stat good"><div class="k">Procenat</div><div class="v" id="sPct">0%</div></div>
+        <div class="stat good"><div class="k">Postotak</div><div class="v" id="sPct">0%</div></div>
       </div>
       <div class="row">
         <button class="btn primary" id="downloadAll">⬇ Preuzmi sve</button>
@@ -316,7 +316,7 @@ git clone https://github.com/Sebwebswiss/imageforge.git
 cd imageforge
 pip install -e .
 
-<span class="c"># cijeli folder — pita koji format želiš</span>
+<span class="c"># cijela mapa — pita koji format želiš</span>
 <span class="p">$</span> imageforge ./photos
 
   <span class="p">✓</span>  hero.jpg → hero.webp  89.2 KB  <span class="y">(-96.2%)</span>
@@ -336,11 +336,11 @@ pip install -e .
 
 <span class="c"># opcije</span>
   --format {webp,avif,jpeg,png}   format izvoza
-  -o, --output PATH               izlazni folder
+  -o, --output PATH               izlazna mapa
   -w, --width PX                  max širina (default 1200)
   -q, --quality 1-100             kvalitet (default 80)
-  -s, --max-size KB               ciljna veličina fajla
-  -r, --recursive                 uključi podfoldere
+  -s, --max-size KB               ciljana veličina datoteke
+  -r, --recursive                 uključi podmape
   -f, --force                     konvertuj ponovo postojeće</pre>
   </section>
 
@@ -350,7 +350,7 @@ pip install -e .
       <div class="feat">
         <div class="ic">⚡</div>
         <h4>Automatska optimizacija veličine</h4>
-        <p>Zadaš „maksimum 100 KB" i engine spušta kvalitet, a zatim i dimenzije dok fajl ne stane. U memoriji, bez temp fajlova.</p>
+        <p>Zadaš „maksimum 100 KB" i engine spušta kvalitet, a zatim i dimenzije dok datoteka ne stane. U memoriji, bez privremenih datoteka.</p>
       </div>
       <div class="feat">
         <div class="ic">📐</div>
@@ -360,21 +360,21 @@ pip install -e .
       <div class="feat">
         <div class="ic">🪟</div>
         <h4>Prozirnost</h4>
-        <p>WebP, AVIF i PNG zadržavaju alpha kanal. JPEG je spljošten na bijelu pozadinu, jer drugačije ne može.</p>
+        <p>WebP, AVIF i PNG zadržavaju alpha kanal. JPEG nema alpha kanal, pa se slika stavlja na bijelu pozadinu.</p>
       </div>
       <div class="feat">
         <div class="ic">📦</div>
         <h4>Batch i rekurzija</h4>
-        <p>Cijeli folder strukture u jednoj komandi. Već obrađene datoteke se preskaču, osim ako ne dodaš <code class="inline">--force</code>.</p>
+        <p>Cijela struktura mapa u jednoj naredbi. Već obrađene datoteke se preskaču, osim ako ne dodaš <code class="inline">--force</code>.</p>
       </div>
       <div class="feat">
         <div class="ic">🔌</div>
         <h4>Python API</h4>
-        <p><code class="inline">convert_image()</code> i <code class="inline">convert_directory()</code> su obične funkcije — koristi ih u svom kodu.</p>
+        <p><code class="inline">convert_image()</code> i <code class="inline">convert_directory()</code> su obične funkcije — koristi ih u svojem kodu.</p>
       </div>
       <div class="feat">
         <div class="ic">🛡️</div>
-        <h4>Privatnost po difoltu</h4>
+        <h4>Privatnost po zadanom</h4>
         <p>Ništa ne ide na server. Ovo je demo za browser; CLI radi lokalno na tvom disku.</p>
       </div>
     </div>
@@ -384,7 +384,7 @@ pip install -e .
 
 <footer>
   <div class="wrap" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%">
-    <span>ImageForge — MIT licencira, napravio Sebastien Zunec</span>
+    <span>ImageForge — pod MIT licencom, autor: Sebastien Zunec</span>
     <span>
       <a href="https://github.com/Sebwebswiss/imageforge" target="_blank" rel="noopener">GitHub</a> ·
       <a href="https://github.com/Sebwebswiss/imageforge/issues" target="_blank" rel="noopener">Issues</a> ·
@@ -400,7 +400,7 @@ pip install -e .
   var FORMATS = {
     webp: { mime: "image/webp", ext: "webp", label: "WebP", alpha: true,  hint: "Podržava prozirnost (alpha)" },
     avif: { mime: "image/avif", ext: "avif", label: "AVIF", alpha: true,  hint: "Podržava prozirnost (alpha). Najbolji omjer, ali kodiranje je sporije." },
-    jpeg: { mime: "image/jpeg", ext: "jpg", label: "JPEG", alpha: false, hint: "Bez prozirnosti — slika se spljoštena na bijelu pozadinu." },
+    jpeg: { mime: "image/jpeg", ext: "jpg", label: "JPEG", alpha: false, hint: "Bez prozirnosti — slika se stavlja na bijelu pozadinu." },
     png:  { mime: "image/png",  ext: "png",  label: "PNG",  alpha: true,  hint: "Bez gubitka kvaliteta. Kvalitet slidera se ignoriše." }
   };
 
@@ -535,7 +535,7 @@ pip install -e .
     var node = document.createElement("div");
     node.className = "card";
     node.style.marginTop = "16px";
-    node.innerHTML = '<div class="status" style="color:var(--muted)">⏳ Obrada ' + list.length + " fajl(a)…</div>";
+    node.innerHTML = '<div class="status" style="color:var(--muted)">⏳ Obrada ' + list.length + " datoteka…</div>";
     results.prepend(node);
 
     for (var i = 0; i < list.length; i++) {

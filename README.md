@@ -121,11 +121,11 @@ There is deliberately **no short flag for `--format`**, because `-f` already mea
 Run without `--format` in a terminal and ImageForge asks:
 
 ```
-  Export format:
-  1) WebP  — najmanji za web, podržava prozirnost (default)
+  Format izvoza:
+  1) WebP  — najmanji za web, podržava prozirnost (zadano)
   2) AVIF  — još manji od WebP-a, sporije kodiranje
   3) JPEG  — univerzalna podrška, bez prozirnosti
-  4) PNG   — bez gubitka kvaliteta, najveći fajlovi
+  4) PNG   — bez gubitka kvaliteta, najveće datoteke
   Unesi broj ili naziv [webp]:
 ```
 
@@ -202,28 +202,28 @@ print(f"Total saved: {total_saved} KB ({total_saved/1024:.1f} MB)")
   ╔═══════════════════════════════════════════════╗
   ║                                               ║
   ║   ImageForge v1.1.0                           ║
-  ║   Professional Image Conversion Toolkit       ║
+  ║   Alat za profesionalnu konverziju slika        ║
   ║                                               ║
   ╚═══════════════════════════════════════════════╝
 
-  Scanning: /home/user/photos  → WEBP
+  Skeniranje: /home/user/photos  → WEBP
 
   ✓  hero.jpg → hero.webp  89.2 KB  (-96.2%)
   ✓  logo.png → logo.webp  12.4 KB  (-94.1%)
-  ⊘  banner.jpg (already converted)
+  ⊘  banner.jpg (već konvertovano)
   ✓  background.png → background.webp  45.8 KB  (-97.3%)
   ✓  team-photo.jpg → team-photo.webp  128.4 KB  (-89.7%)
 
 ──────────────────────────────────────────────────
-  Summary
+  Sažetak
 ──────────────────────────────────────────────────
-  Converted:  4  │  Skipped:  1  │  Failed:  0
-  Original:   8,450 KB (8.3 MB)
-  Final:      276 KB (0.3 MB)
-  Saved:      8,174 KB (8.0 MB)
+  Konvertovano:  4  │  Preskočeno:  1  │  Neuspjelo:  0
+  Original:    8,450 KB (8.3 MB)
+  Rezultat:    276 KB (0.3 MB)
+  Ušteda:      8,174 KB (8.0 MB)
 ──────────────────────────────────────────────────
 
-  Files written to: /home/user/photos/webp_output
+  Datoteke su zapisane u: /home/user/photos/webp_output
 ```
 
 ### Supported Formats

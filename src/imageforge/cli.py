@@ -33,13 +33,20 @@ RESET = "\033[0m"
 
 def print_banner() -> None:
     """Print application banner."""
+    width = 47
+    title = f"ImageForge v{__version__}"
+    tagline = "Alat za profesionalnu konverziju slika"
+    blank = " " * width
+    title_pad = " " * (width - 3 - len(title))
+    tagline_pad = " " * (width - 3 - len(tagline))
+
     banner = f"""
-{CYAN}{BOLD}  ╔═══════════════════════════════════════════════╗
-  ║                                               ║
-  ║   {MAGENTA}ImageForge{CYAN} {WHITE}v{__version__}{CYAN}{BOLD}                          ║
-  ║   {DIM}Professional Image Conversion Toolkit{RESET}{CYAN}{BOLD}       ║
-  ║                                               ║
-  ╚═══════════════════════════════════════════════╝{RESET}
+{CYAN}{BOLD}  ╔{'═' * width}╗
+  ║{blank}║
+  ║   {MAGENTA}ImageForge{CYAN} {WHITE}v{__version__}{title_pad}{CYAN}{BOLD}║
+  ║   {DIM}{tagline}{tagline_pad}{RESET}{CYAN}{BOLD}║
+  ║{blank}║
+  ╚{'═' * width}╝{RESET}
 """
     print(banner)
 
@@ -54,9 +61,9 @@ def prompt_format() -> str:
     if not (sys.stdin.isatty() and sys.stdout.isatty()):
         return DEFAULT_FORMAT
 
-    print(f"\n{BOLD}  Export format:{RESET}")
+    print(f"\n{BOLD}  Format izvoza:{RESET}")
     for i, key in enumerate(FORMAT_CHOICES, 1):
-        marker = f" {GREEN}(default){RESET}" if key == DEFAULT_FORMAT else ""
+        marker = f" {GREEN}(zadano){RESET}" if key == DEFAULT_FORMAT else ""
         print(f"  {CYAN}{i}{RESET}) {FORMAT_LABELS[key]}{marker}")
 
     while True:
@@ -80,7 +87,7 @@ def print_result(result: ConversionResult, index: int) -> None:
     if result.error == "skipped":
         print(
             f"  {YELLOW}⊘{RESET}  {DIM}{result.input_path.name}{RESET} "
-            f"{DIM}(already converted){RESET}"
+            f"{DIM}(već konvertovano){RESET}"
         )
         return
 
@@ -110,14 +117,14 @@ def print_summary(results: List[ConversionResult]) -> None:
     total_saved = total_original - total_final
 
     print(f"\n{BOLD}{'─' * 50}{RESET}")
-    print(f"{BOLD}  Summary{RESET}")
+    print(f"{BOLD}  Sažetak{RESET}")
     print(f"{'─' * 50}")
-    print(f"  Converted:  {GREEN}{len(successful)}{RESET}", end="")
-    print(f"  │  Skipped:  {YELLOW}{len(skipped)}{RESET}", end="")
-    print(f"  │  Failed:  {RED}{len(failed)}{RESET}")
-    print(f"  Original:   {total_original:,.0f} KB ({total_original/1024:.1f} MB)")
-    print(f"  Final:      {total_final:,.0f} KB ({total_final/1024:.1f} MB)")
-    print(f"  {GREEN}Saved:      {total_saved:,.0f} KB ({total_saved/1024:.1f} MB){RESET}")
+    print(f"  Konvertovano:  {GREEN}{len(successful)}{RESET}", end="")
+    print(f"  │  Preskočeno:  {YELLOW}{len(skipped)}{RESET}", end="")
+    print(f"  │  Neuspjelo:  {RED}{len(failed)}{RESET}")
+    print(f"  Original:      {total_original:,.0f} KB ({total_original/1024:.1f} MB)")
+    print(f"  Rezultat:      {total_final:,.0f} KB ({total_final/1024:.1f} MB)")
+    print(f"  {GREEN}Ušteda:       {total_saved:,.0f} KB ({total_saved/1024:.1f} MB){RESET}")
     print(f"{'─' * 50}\n")
 
 
@@ -126,7 +133,7 @@ def cmd_convert(args: argparse.Namespace) -> None:
     input_path = Path(args.input).resolve()
 
     if not input_path.exists():
-        print(f"\n  {RED}Error:{RESET} '{args.input}' does not exist.\n")
+        print(f"\n  {RED}Greška:{RESET} '{args.input}' ne postoji.\n")
         sys.exit(1)
 
     output_format = args.format or prompt_format()
@@ -134,7 +141,7 @@ def cmd_convert(args: argparse.Namespace) -> None:
     try:
         fmt = resolve_format(output_format)
     except ValueError as exc:
-        print(f"\n  {RED}Error:{RESET} {exc}\n")
+        print(f"\n  {RED}Greška:{RESET} {exc}\n")
         sys.exit(2)
 
     output_path = Path(args.output).resolve() if args.output else None
@@ -147,7 +154,9 @@ def cmd_convert(args: argparse.Namespace) -> None:
             )
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        print(f"\n{BOLD}  Converting:{RESET} {input_path.name}  {DIM}→{RESET} {fmt.name.upper()}")
+        print(
+            f"\n{BOLD}  Konvertovanje:{RESET} {input_path.name}  {DIM}→{RESET} {fmt.name.upper()}"
+        )
 
         result = convert_image(
             input_path=input_path,
@@ -160,7 +169,7 @@ def cmd_convert(args: argparse.Namespace) -> None:
         )
         results = [result]
     else:
-        print(f"\n{BOLD}  Scanning:{RESET} {input_path}  {DIM}→{RESET} {fmt.name.upper()}")
+        print(f"\n{BOLD}  Skeniranje:{RESET} {input_path}  {DIM}→{RESET} {fmt.name.upper()}")
 
         results = convert_directory(
             input_dir=input_path,
@@ -184,9 +193,9 @@ def cmd_convert(args: argparse.Namespace) -> None:
                 if input_path.is_dir()
                 else input_path.parent / f"{fmt.name}_output"
             )
-            print(f"  {DIM}Files written to:{RESET} {target}\n")
+            print(f"  {DIM}Datoteke su zapisane u:{RESET} {target}\n")
     else:
-        print(f"\n  {YELLOW}No supported images found.{RESET}\n")
+        print(f"\n  {YELLOW}Nije pronađena nijedna podržana slika.{RESET}\n")
 
 
 def main(argv: Optional[List[str]] = None) -> None:
@@ -198,28 +207,28 @@ def main(argv: Optional[List[str]] = None) -> None:
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=f"""
-{BOLD}Examples:{RESET}
-  %(prog)s ./photos                          Convert all images in ./photos (asks format)
-  %(prog)s ./photos --format avif            Export as AVIF
-  %(prog)s ./photos --format jpeg            Export as JPEG
-  %(prog)s photo.jpg -o out.webp             Convert a single image
-  %(prog)s ./photos --max-size 100           Target 100KB max file size
-  %(prog)s ./photos --width 800 --quality 75 Custom dimensions and quality
-  %(prog)s ./site --recursive                Include subdirectories
+{BOLD}Primjeri:{RESET}
+  %(prog)s ./photos                          Konvertira sve slike iz ./photos (pita format)
+  %(prog)s ./photos --format avif            Izvoz u AVIF
+  %(prog)s ./photos --format jpeg            Izvoz u JPEG
+  %(prog)s photo.jpg -o out.webp             Konvertovanje jedne slike
+  %(prog)s ./photos --max-size 100           Cilj: najviše 100 KB po datoteci
+  %(prog)s ./photos --width 800 --quality 75 Vlastite dimenzije i kvalitet
+  %(prog)s ./site --recursive                Uključuje podmape
 
-{BOLD}Supported formats:{RESET}
-  JPEG, PNG, BMP, TIFF, GIF → WebP (default), AVIF, JPEG, PNG
+{BOLD}Podržani formati:{RESET}
+  JPEG, PNG, BMP, TIFF, GIF → WebP (zadano), AVIF, JPEG, PNG
 """,
     )
 
     parser.add_argument(
         "input",
-        help="Input image file or directory containing images",
+        help="Ulazna slika ili mapa sa slikama",
     )
     parser.add_argument(
         "-o",
         "--output",
-        help="Output file or directory (default: <input>/<format>_output)",
+        help="Izlazna datoteka ili mapa (zadano: <input>/<format>_output)",
     )
     parser.add_argument(
         "--format",
@@ -227,7 +236,7 @@ def main(argv: Optional[List[str]] = None) -> None:
         default=None,
         metavar="{" + ",".join(FORMAT_CHOICES) + "}",
         help=(
-            f"Export format (default: {DEFAULT_FORMAT}; "
+            f"Format izvoza (zadano: {DEFAULT_FORMAT}; "
             "asks interactively when omitted in a terminal)"
         ),
     )
@@ -253,19 +262,19 @@ def main(argv: Optional[List[str]] = None) -> None:
         type=int,
         default=None,
         metavar="KB",
-        help="Target max file size in KB with auto-optimization",
+        help="Ciljana veličina datoteke u KB uz automatsku optimizaciju",
     )
     parser.add_argument(
         "-r",
         "--recursive",
         action="store_true",
-        help="Process subdirectories recursively",
+        help="Obradi podmape rekurzivno",
     )
     parser.add_argument(
         "-f",
         "--force",
         action="store_true",
-        help="Re-convert even if output file exists",
+        help="Konvertira ponovno iako izlazna datoteka postoji",
     )
     parser.add_argument(
         "-v",

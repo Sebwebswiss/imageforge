@@ -58,7 +58,7 @@ FORMAT_LABELS = {
     "webp": "WebP  — najmanji za web, podržava prozirnost (preporučeno)",
     "avif": "AVIF  — još manji od WebP-a, sporije kodiranje",
     "jpeg": "JPEG  — univerzalna podrška, bez prozirnosti",
-    "png": "PNG  — bez gubitka kvaliteta, najveći fajlovi",
+    "png": "PNG  — bez gubitka kvaliteta, najveće datoteke",
 }
 
 
@@ -75,7 +75,9 @@ def resolve_format(name: str) -> OutputFormat:
     if key == "tif":
         key = "tiff"
     if key not in FORMATS:
-        raise ValueError(f"Unsupported format '{name}'. Choose one of: {', '.join(FORMAT_CHOICES)}")
+        raise ValueError(
+            f"Nepodržan format '{name}'. Odaberi jedan od: {', '.join(FORMAT_CHOICES)}"
+        )
     return FORMATS[key]
 
 

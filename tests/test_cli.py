@@ -116,7 +116,7 @@ class TestOutputReporting:
     def test_missing_input_exits_with_error(self, tmp_path, capsys):
         code, stdout = run_cli([str(tmp_path / "nope.jpg")], capsys)
         assert code == 1
-        assert "does not exist" in stdout
+        assert "ne postoji" in stdout
 
 
 class TestBatchOutputReporting:
@@ -131,5 +131,5 @@ class TestBatchOutputReporting:
         code, stdout = run_cli([str(input_dir), "-r", "--format", "webp"], capsys)
 
         assert code == 0
-        assert "Converted:  2" in stdout
-        assert "Failed:  0" in stdout
+        assert "Konvertovano:  2" in stdout
+        assert "Neuspjelo:  0" in stdout

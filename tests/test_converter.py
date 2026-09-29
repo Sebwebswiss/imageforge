@@ -172,7 +172,7 @@ class TestOutputFormats:
         assert resolve_format("  WebP  ") is resolve_format("webp")
 
     def test_resolve_format_rejects_unknown(self):
-        with pytest.raises(ValueError, match="Unsupported format"):
+        with pytest.raises(ValueError, match="Nepodržan format"):
             resolve_format("tiff-out")
 
     def test_jpeg_declares_no_alpha_support(self):
@@ -249,7 +249,7 @@ class TestConvertToFormat:
         result = convert_image(sample_image, tmp_path / "x.out", output_format="bmp7")
 
         assert result.success is False
-        assert "Unsupported format" in result.error
+        assert "Nepodržan format" in result.error
 
 
 class TestRecursiveOutputExclusion:
