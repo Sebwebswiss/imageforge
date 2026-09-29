@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="bs">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>ImageForge — WebP / AVIF konverter u browseru</title>
-<meta name="description" content="Besplatno konvertuj slike u WebP, AVIF, JPEG ili PNG direktno u browseru. Sve se radi lokalno, nijedna datoteka se ne šalje na server.">
+<title>ImageForge — Professional Image Conversion in Your Browser</title>
+<meta name="description" content="Convert JPEG, PNG, BMP, TIFF and GIF images to WebP, AVIF, JPEG or PNG directly in your browser, with automatic size optimization. Nothing is uploaded.">
+<meta name="theme-color" content="#0a0c14">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚒️</text></svg>">
 <style>
   :root {
@@ -35,7 +36,22 @@
   }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
 
-  header { padding: 64px 0 32px; }
+  header { padding: 64px 0 32px; position: relative; }
+  .lang-switch {
+    position: absolute; top: 64px; right: 20px; display: inline-flex;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 999px; padding: 3px; gap: 2px;
+  }
+  .lang-switch button {
+    appearance: none; border: 0; background: transparent; color: var(--muted);
+    font: 700 12.5px/1 inherit; letter-spacing: .4px; padding: 7px 14px;
+    border-radius: 999px; cursor: pointer; transition: .16s ease;
+  }
+  .lang-switch button:hover { color: var(--text); }
+  .lang-switch button[aria-pressed="true"] {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #fff;
+  }
   .badge {
     display: inline-flex; align-items: center; gap: 8px;
     background: linear-gradient(135deg, rgba(91,140,255,.16), rgba(160,107,255,.16));
@@ -222,6 +238,8 @@
     .item { grid-template-columns: 1fr; }
     .item .actions { grid-auto-flow: column; justify-content: start; }
     .thumbs { grid-auto-flow: column; }
+    header { padding-top: 76px; }
+    .lang-switch { top: 20px; right: 20px; }
   }
 </style>
 </head>
@@ -229,22 +247,26 @@
 
 <header>
   <div class="wrap">
-    <span class="badge"><span class="dot"></span> Radi 100% u browseru · bez servera</span>
-    <h1>ImageForge<br><span class="grad">slike bez čekanja</span></h1>
-    <p class="lede">
-      Isti engine kao CLI alat — konvertuj JPEG, PNG, BMP, TIFF i GIF slike u
-      <b>WebP</b>, <b>AVIF</b>, <b>JPEG</b> ili <b>PNG</b>, sa automatskom
-      optimizacijom do zadane veličine datoteke. Ništa se ne uploaduje.
+    <div class="lang-switch" role="group" id="langSwitch">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="hr" aria-pressed="false">HR</button>
+    </div>
+    <span class="badge"><span class="dot"></span> <span data-i18n="badge">Runs 100% in your browser · no server</span></span>
+    <h1>ImageForge<br><span class="grad" data-i18n="hero.tagline">Professional image conversion</span></h1>
+    <p class="lede" data-i18n-html="hero.lede">
+      The same engine as the CLI — convert JPEG, PNG, BMP, TIFF and GIF images to
+      <b>WebP</b>, <b>AVIF</b>, <b>JPEG</b> or <b>PNG</b>, with automatic
+      optimization down to a target file size. Nothing is uploaded.
     </p>
     <div class="head-actions">
-      <a class="btn primary" href="#try">Isprobaj odmah</a>
-      <a class="btn" href="https://github.com/Sebwebswiss/imageforge" target="_blank" rel="noopener">
-        ⭐ GitHub repo
+      <a class="btn primary" href="#try" data-i18n="hero.cta">Try it now</a>
+      <a class="btn" href="https://github.com/Sebwebswiss/imageforge" target="_blank" rel="noopener" data-i18n="hero.repo">
+        ⭐ GitHub repository
       </a>
     </div>
     <p class="privacy">
-      🔒 <span>Slike se čitaju iz tvog browsera i nikad ne napuštaju uređaj.</span>
-      <b>0 upload-a.</b>
+      🔒 <span data-i18n="privacy.text">Images are read in your browser and never leave your device.</span>
+      <b data-i18n="privacy.zero">0 uploads.</b>
     </p>
   </div>
 </header>
@@ -255,63 +277,63 @@
     <div class="card">
       <div id="drop">
         <div class="icon">🖼️</div>
-        <h3>Povuci slike ovamo</h3>
-        <p>Ili klikni i odaberi jednu ili više slika</p>
-        <p class="mini">ili generiraj testnu sliku jednim klikom 👇</p>
+        <h3 data-i18n="drop.title">Drag &amp; drop your images here</h3>
+        <p data-i18n="drop.sub">Or click to select one or more images</p>
+        <p class="mini" data-i18n="drop.mini">or generate a test image with one click 👇</p>
       </div>
       <input type="file" id="picker" accept="image/*" multiple hidden>
       <input type="file" id="folderPicker" webkitdirectory directory multiple hidden>
 
       <div class="controls">
         <div class="field">
-          <label for="format">Format izvoza</label>
+          <label for="format" data-i18n="fmt.label">Export format</label>
           <select id="format">
-            <option value="webp">WebP — najmanji za web</option>
-            <option value="avif">AVIF — još manji, sporiji</option>
-            <option value="jpeg">JPEG — univerzalna podrška</option>
-            <option value="png">PNG — bez gubitka kvaliteta</option>
+            <option value="webp" data-i18n="fmt.opt.webp">WebP — smallest for the web</option>
+            <option value="avif" data-i18n="fmt.opt.avif">AVIF — even smaller, slower</option>
+            <option value="jpeg" data-i18n="fmt.opt.jpeg">JPEG — universal support</option>
+            <option value="png" data-i18n="fmt.opt.png">PNG — lossless quality</option>
           </select>
-          <div class="hint" id="fmtHint">Podržava prozirnost (alpha)</div>
+          <div class="hint" id="fmtHint"></div>
           <div class="unsupported" id="fmtWarn"></div>
         </div>
 
         <div class="field">
-          <label for="width">Max širina <span class="val" id="widthVal">1200 px</span></label>
+          <label for="width"><span data-i18n="width.label">Max width</span> <span class="val" id="widthVal">1200 px</span></label>
           <input type="range" id="width" min="200" max="4000" step="20" value="1200">
-          <div class="hint">Slike šire od toga se automatski smanjuju, proporcije se čuvaju.</div>
+          <div class="hint" data-i18n="width.hint">Wider images are scaled down automatically; aspect ratio is preserved.</div>
         </div>
 
         <div class="field">
-          <label for="quality">Kvalitet <span class="val" id="qualityVal">80</span></label>
+          <label for="quality"><span data-i18n="quality.label">Quality</span> <span class="val" id="qualityVal">80</span></label>
           <input type="range" id="quality" min="10" max="100" step="1" value="80">
-          <div class="hint" id="qualityHint">WebP / AVIF / JPEG</div>
+          <div class="hint" id="qualityHint"></div>
         </div>
 
         <div class="field">
-          <label for="maxSize">Ciljna veličina <span class="val" id="maxSizeVal">—</span></label>
-          <input type="number" id="maxSize" min="0" step="10" value="0" placeholder="npr. 100">
-          <div class="hint">0 = bez cilja. Inače se kvalitet i dimenzije automatski smanjuju dok datoteka ne stane u zadani broj KB.</div>
+          <label for="maxSize"><span data-i18n="size.label">Target size</span> <span class="val" id="maxSizeVal">—</span></label>
+          <input type="number" id="maxSize" min="0" step="10" value="0" placeholder="e.g. 100">
+          <div class="hint" data-i18n="size.hint">0 = no target. Otherwise quality and dimensions are lowered until the file fits within the given number of KB.</div>
         </div>
       </div>
 
       <label class="checkbox" style="margin-top:18px">
         <input type="checkbox" id="autoZip">
-        <span>Automatski preuzmi ZIP čim konverzija završi (ako je više od jedne slike)</span>
+        <span data-i18n="zip.auto">Download the ZIP automatically when conversion finishes (when there is more than one image)</span>
       </label>
     </div>
 
     <div id="summary">
       <div class="stats">
-        <div class="stat"><div class="k">Datoteka</div><div class="v" id="sCount">0</div></div>
-        <div class="stat"><div class="k">Prije</div><div class="v" id="sBefore">0 KB</div></div>
-        <div class="stat"><div class="k">Poslije</div><div class="v" id="sAfter">0 KB</div></div>
-        <div class="stat good"><div class="k">Ušteda</div><div class="v" id="sSaved">0 KB</div></div>
-        <div class="stat good"><div class="k">Postotak</div><div class="v" id="sPct">0%</div></div>
+        <div class="stat"><div class="k" data-i18n="stat.files">Files</div><div class="v" id="sCount">0</div></div>
+        <div class="stat"><div class="k" data-i18n="stat.before">Before</div><div class="v" id="sBefore">0 KB</div></div>
+        <div class="stat"><div class="k" data-i18n="stat.after">After</div><div class="v" id="sAfter">0 KB</div></div>
+        <div class="stat good"><div class="k" data-i18n="stat.saved">Saved</div><div class="v" id="sSaved">0 KB</div></div>
+        <div class="stat good"><div class="k" data-i18n="stat.pct">Reduction</div><div class="v" id="sPct">0%</div></div>
       </div>
       <div class="row">
-        <button class="btn primary" id="downloadZip">🗜 Preuzmi ZIP</button>
-        <button class="btn" id="downloadAll">⬇ Spremi svaku pojedinačno</button>
-        <button class="btn" id="clear">🗑 Očisti</button>
+        <button class="btn primary" id="downloadZip" data-i18n="zip.download">🗜 Download ZIP</button>
+        <button class="btn" id="downloadAll" data-i18n="zip.each">⬇ Save each separately</button>
+        <button class="btn" id="clear" data-i18n="zip.clear">🗑 Clear</button>
       </div>
       <p class="hint" id="zipNote"></p>
     </div>
@@ -320,73 +342,43 @@
   </section>
 
   <section class="term-section">
-    <h2>Ista stvar, u terminalu</h2>
-    <p class="sub">Ovaj demo je web sučelje za isti engine. Za rad na stotinama slika, CLI je brži.</p>
-    <pre class="term"><span class="c"># instalacija</span>
-git clone https://github.com/Sebwebswiss/imageforge.git
-cd imageforge
-pip install -e .
-
-<span class="c"># cijela mapa — pita koji format želiš</span>
-<span class="p">$</span> imageforge ./photos
-
-  <span class="p">✓</span>  hero.jpg → hero.webp  89.2 KB  <span class="y">(-96.2%)</span>
-  <span class="p">✓</span>  logo.png → logo.webp  12.4 KB  <span class="y">(-94.1%)</span>
-  <span class="p">✓</span>  team.jpg → team.webp  128.4 KB <span class="y">(-89.7%)</span>
-
-──────────────────────────────────────────────────
-  Summary
-──────────────────────────────────────────────────
-  Converted:  3  │  Skipped:  0  │  Failed:  0
-  Original:   8,450 KB (8.3 MB)
-  Final:      276 KB (0.3 MB)
-  Saved:      8,174 KB (8.0 MB)
-
-<span class="c"># ili eksplicitno, za skripte i CI (bez pitanja)</span>
-<span class="p">$</span> imageforge ./photos --format avif --max-size 100 --recursive
-
-<span class="c"># opcije</span>
-  --format {webp,avif,jpeg,png}   format izvoza
-  -o, --output PATH               izlazna mapa
-  -w, --width PX                  max širina (default 1200)
-  -q, --quality 1-100             kvalitet (default 80)
-  -s, --max-size KB               ciljana veličina datoteke
-  -r, --recursive                 uključi podmape
-  -f, --force                     konvertuj ponovo postojeće</pre>
+    <h2 data-i18n="term.title">The same thing, in a terminal</h2>
+    <p class="sub" data-i18n="term.sub">This demo is a web interface to the same engine. For hundreds of images, the CLI is faster.</p>
+    <pre class="term" data-i18n-html="term.code"></pre>
   </section>
 
   <section class="features">
-    <h2>Zašto radi</h2>
+    <h2 data-i18n="feat.title">Why it works</h2>
     <div class="grid">
       <div class="feat">
         <div class="ic">⚡</div>
-        <h4>Automatska optimizacija veličine</h4>
-        <p>Zadaš „maksimum 100 KB" i engine spušta kvalitet, a zatim i dimenzije dok datoteka ne stane. U memoriji, bez privremenih datoteka.</p>
+        <h4 data-i18n="feat.1h">Automatic size optimization</h4>
+        <p data-i18n="feat.1p">Set a “100 KB maximum” and the engine lowers quality, then dimensions, until the file fits. In memory, no temporary files.</p>
       </div>
       <div class="feat">
         <div class="ic">📐</div>
-        <h4>EXIF orijentacija</h4>
-        <p>Fotografije s telefona se više ne prikazuju rotirane — orijentacija se primjenjuje prije skaliranja.</p>
+        <h4 data-i18n="feat.2h">EXIF orientation</h4>
+        <p data-i18n="feat.2p">Photos from a phone no longer display rotated — orientation is applied before scaling.</p>
       </div>
       <div class="feat">
         <div class="ic">🪟</div>
-        <h4>Prozirnost</h4>
-        <p>WebP, AVIF i PNG zadržavaju alpha kanal. JPEG nema alpha kanal, pa se slika stavlja na bijelu pozadinu.</p>
+        <h4 data-i18n="feat.3h">Transparency</h4>
+        <p data-i18n="feat.3p">WebP, AVIF and PNG keep the alpha channel. JPEG has no alpha channel, so the image is placed on a white background.</p>
       </div>
       <div class="feat">
         <div class="ic">📦</div>
-        <h4>Batch i rekurzija</h4>
-        <p>Cijela struktura mapa u jednoj naredbi. Već obrađene datoteke se preskaču, osim ako ne dodaš <code class="inline">--force</code>.</p>
+        <h4 data-i18n="feat.4h">Batch and recursion</h4>
+        <p data-i18n="feat.4p">A whole folder structure in one command. Already-processed files are skipped unless you add <code class="inline">--force</code>.</p>
       </div>
       <div class="feat">
         <div class="ic">🔌</div>
-        <h4>Python API</h4>
-        <p><code class="inline">convert_image()</code> i <code class="inline">convert_directory()</code> su obične funkcije — koristi ih u svojem kodu.</p>
+        <h4 data-i18n="feat.5h">Python API</h4>
+        <p data-i18n-html="feat.5p"><code class="inline">convert_image()</code> and <code class="inline">convert_directory()</code> are plain functions — use them in your own code.</p>
       </div>
       <div class="feat">
         <div class="ic">🛡️</div>
-        <h4>Privatnost po zadanom</h4>
-        <p>Ništa ne ide na server. Ovo je demo za browser; CLI radi lokalno na tvom disku.</p>
+        <h4 data-i18n="feat.6h">Private by default</h4>
+        <p data-i18n="feat.6p">Nothing goes to a server. This is the browser demo; the CLI runs locally on your disk.</p>
       </div>
     </div>
   </section>
@@ -395,11 +387,11 @@ pip install -e .
 
 <footer>
   <div class="wrap" style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;width:100%">
-    <span>ImageForge — pod MIT licencom, autor: Sebastien Zunec</span>
+    <span data-i18n="footer.by">ImageForge — MIT licensed, by Sebastien Zunec</span>
     <span>
       <a href="https://github.com/Sebwebswiss/imageforge" target="_blank" rel="noopener">GitHub</a> ·
       <a href="https://github.com/Sebwebswiss/imageforge/issues" target="_blank" rel="noopener">Issues</a> ·
-      <a href="https://github.com/Sebwebswiss/imageforge#readme" target="_blank" rel="noopener">Dokumentacija</a>
+      <a href="https://github.com/Sebwebswiss/imageforge#readme" target="_blank" rel="noopener" data-i18n="footer.docs">Documentation</a>
     </span>
   </div>
 </footer>
@@ -408,11 +400,203 @@ pip install -e .
 (function () {
   "use strict";
 
+  /* ------------------------------------------------------------------
+     Translations. English is the default; Croatian is the alternative.
+     Keys are referenced from the DOM via data-i18n / data-i18n-html and
+     from JavaScript via t("key", {vars}).
+     ------------------------------------------------------------------ */
+  var I18N = {
+    en: {
+      "doc.title": "ImageForge — Professional Image Conversion in Your Browser",
+      "doc.desc": "Convert JPEG, PNG, BMP, TIFF and GIF images to WebP, AVIF, JPEG or PNG directly in your browser, with automatic size optimization. Nothing is uploaded.",
+      "badge": "Runs 100% in your browser · no server",
+      "hero.tagline": "Professional image conversion",
+      "hero.lede": "The same engine as the CLI — convert JPEG, PNG, BMP, TIFF and GIF images to <b>WebP</b>, <b>AVIF</b>, <b>JPEG</b> or <b>PNG</b>, with automatic optimization down to a target file size. Nothing is uploaded.",
+      "hero.cta": "Try it now",
+      "hero.repo": "⭐ GitHub repository",
+      "privacy.text": "Images are read in your browser and never leave your device.",
+      "privacy.zero": "0 uploads.",
+      "drop.title": "Drag & drop your images here",
+      "drop.sub": "Or click to select one or more images",
+      "drop.mini": "or generate a test image with one click 👇",
+      "drop.sample": "✨ Generate a test image",
+      "drop.folder": "📁 Choose a folder",
+      "fmt.label": "Export format",
+      "fmt.opt.webp": "WebP — smallest for the web",
+      "fmt.opt.avif": "AVIF — even smaller, slower",
+      "fmt.opt.jpeg": "JPEG — universal support",
+      "fmt.opt.png": "PNG — lossless quality",
+      "fmt.hint.webp": "Supports transparency (alpha)",
+      "fmt.hint.avif": "Supports transparency (alpha). Best ratio, but encoding is slower.",
+      "fmt.hint.jpeg": "No transparency — the image is placed on a white background.",
+      "fmt.hint.png": "Lossless. The quality slider is ignored.",
+      "fmt.warn": "This browser cannot encode to: {list}. Use Chrome, Edge or Firefox 90+.",
+      "width.label": "Max width",
+      "width.hint": "Wider images are scaled down automatically; aspect ratio is preserved.",
+      "quality.label": "Quality",
+      "quality.hint.png": "PNG is lossless — the slider is disabled",
+      "size.label": "Target size",
+      "size.hint": "0 = no target. Otherwise quality and dimensions are lowered until the file fits within the given number of KB.",
+      "zip.auto": "Download the ZIP automatically when conversion finishes (when there is more than one image)",
+      "stat.files": "Files",
+      "stat.before": "Before",
+      "stat.after": "After",
+      "stat.saved": "Saved",
+      "stat.pct": "Reduction",
+      "zip.download": "🗜 Download ZIP",
+      "zip.each": "⬇ Save each separately",
+      "zip.clear": "🗑 Clear",
+      "zip.busy": "⏳ Packaging…",
+      "zip.note.one": "Single image — use “Save each separately” or the download button next to the image.",
+      "zip.note.many": "The ZIP contains {n} files, {total} in total. The archive is stored without recompression because the images are already compressed.",
+      "zip.note.tooMany": "Too many files for a single archive ({n}). Use “Save each separately” instead.",
+      "zip.error": "Packaging error: {msg}",
+      "term.title": "The same thing, in a terminal",
+      "term.sub": "This demo is a web interface to the same engine. For hundreds of images, the CLI is faster.",
+      "term.code": '<span class="c"># install</span>\ngit clone https://github.com/Sebwebswiss/imageforge.git\ncd imageforge\npip install -e .\n\n<span class="c"># a whole folder — asks which format you want</span>\n<span class="p">$</span> imageforge ./photos\n\n  <span class="p">✓</span>  hero.jpg → hero.webp  89.2 KB  <span class="y">(-96.2%)</span>\n  <span class="p">✓</span>  logo.png → logo.webp  12.4 KB  <span class="y">(-94.1%)</span>\n  <span class="p">✓</span>  team.jpg → team.webp  128.4 KB <span class="y">(-89.7%)</span>\n\n──────────────────────────────────────────────────\n  Summary\n──────────────────────────────────────────────────\n  Converted:  3  │  Skipped:  0  │  Failed:  0\n  Original:   8,450 KB (8.3 MB)\n  Final:      276 KB (0.3 MB)\n  Saved:      8,174 KB (8.0 MB)\n\n<span class="c"># or explicitly, for scripts and CI (no prompt)</span>\n<span class="p">$</span> imageforge ./photos --format avif --max-size 100 --recursive\n\n<span class="c"># options</span>\n  --format {webp,avif,jpeg,png}   export format\n  -o, --output PATH               output folder\n  -w, --width PX                  max width (default 1200)\n  -q, --quality 1-100             quality (default 80)\n  -s, --max-size KB               target file size\n  -r, --recursive                 include subfolders\n  -f, --force                     re-convert existing files',
+      "feat.title": "Why it works",
+      "feat.1h": "Automatic size optimization",
+      "feat.1p": "Set a “100 KB maximum” and the engine lowers quality, then dimensions, until the file fits. In memory, no temporary files.",
+      "feat.2h": "EXIF orientation",
+      "feat.2p": "Photos from a phone no longer display rotated — orientation is applied before scaling.",
+      "feat.3h": "Transparency",
+      "feat.3p": "WebP, AVIF and PNG keep the alpha channel. JPEG has no alpha channel, so the image is placed on a white background.",
+      "feat.4h": "Batch and recursion",
+      "feat.4p": "A whole folder structure in one command. Already-processed files are skipped unless you add <code class=\"inline\">--force</code>.",
+      "feat.5h": "Python API",
+      "feat.5p": "<code class=\"inline\">convert_image()</code> and <code class=\"inline\">convert_directory()</code> are plain functions — use them in your own code.",
+      "feat.6h": "Private by default",
+      "feat.6p": "Nothing goes to a server. This is the browser demo; the CLI runs locally on your disk.",
+      "footer.by": "ImageForge — MIT licensed, by Sebastien Zunec",
+      "footer.docs": "Documentation",
+      "msg.processing": "⏳ Processing {n} file(s)…",
+      "msg.error": "error",
+      "msg.missed": "target {n} KB not reached",
+      "dl.button": "⬇ Download",
+      "cap.before": "before",
+      "cap.after": "after",
+      "enc.fail": "The browser could not encode the image.",
+      "sample.caption": "generated test image · 1600×1000"
+    },
+
+    hr: {
+      "doc.title": "ImageForge — profesionalna konverzija slika u browseru",
+      "doc.desc": "Konvertujte JPEG, PNG, BMP, TIFF i GIF slike u WebP, AVIF, JPEG ili PNG izravno u browseru, uz automatsku optimizaciju veličine. Ništa se ne uploaduje.",
+      "badge": "Radi 100% u browseru · bez servera",
+      "hero.tagline": "Profesionalna konverzija slika",
+      "hero.lede": "Isti engine kao i CLI alat — konvertujte JPEG, PNG, BMP, TIFF i GIF slike u <b>WebP</b>, <b>AVIF</b>, <b>JPEG</b> ili <b>PNG</b>, uz automatsku optimizaciju do zadane veličine datoteke. Ništa se ne uploaduje.",
+      "hero.cta": "Isprobajte odmah",
+      "hero.repo": "⭐ GitHub repozitorij",
+      "privacy.text": "Slike se čitaju u vašem browseru i nikad ne napuštaju uređaj.",
+      "privacy.zero": "0 upload-a.",
+      "drop.title": "Povucite slike ovamo",
+      "drop.sub": "Ili kliknite i odaberite jednu ili više slika",
+      "drop.mini": "ili generirajte testnu sliku jednim klikom 👇",
+      "drop.sample": "✨ Generirajte testnu sliku",
+      "drop.folder": "📁 Odaberite mapu",
+      "fmt.label": "Format izvoza",
+      "fmt.opt.webp": "WebP — najmanji za web",
+      "fmt.opt.avif": "AVIF — još manji, sporiji",
+      "fmt.opt.jpeg": "JPEG — univerzalna podrška",
+      "fmt.opt.png": "PNG — bez gubitka kvaliteta",
+      "fmt.hint.webp": "Podržava prozirnost (alpha)",
+      "fmt.hint.avif": "Podržava prozirnost (alpha). Najbolji omjer, ali kodiranje je sporije.",
+      "fmt.hint.jpeg": "Bez prozirnosti — slika se stavlja na bijelu pozadinu.",
+      "fmt.hint.png": "Bez gubitka kvaliteta. Slider kvalitete se ignoriše.",
+      "fmt.warn": "Ovaj browser ne podržava kodiranje u: {list}. Koristite Chrome, Edge ili Firefox 90+.",
+      "width.label": "Max širina",
+      "width.hint": "Šire slike automatski se smanjuju, a proporcije se čuvaju.",
+      "quality.label": "Kvaliteta",
+      "quality.hint.png": "PNG je bez gubitka — slider je onemogućen",
+      "size.label": "Ciljna veličina",
+      "size.hint": "0 = bez cilja. Inače se kvaliteta i dimenzije automatski smanjuju dok datoteka ne stane u zadani broj KB.",
+      "zip.auto": "Automatski preuzmi ZIP čim konverzija završi (ako ima više od jedne slike)",
+      "stat.files": "Datoteka",
+      "stat.before": "Prije",
+      "stat.after": "Poslije",
+      "stat.saved": "Ušteda",
+      "stat.pct": "Smanjenje",
+      "zip.download": "🗜 Preuzmi ZIP",
+      "zip.each": "⬇ Spremi svaku zasebno",
+      "zip.clear": "🗑 Očisti",
+      "zip.busy": "⏳ Pakiranje…",
+      "zip.note.one": "Jedna slika — koristite „Spremi svaku zasebno” ili gumb za preuzimanje uz sliku.",
+      "zip.note.many": "ZIP sadrži {n} datoteka, ukupno {total}. Arhiva se pohranjuje bez ponovne kompresije jer su slike već komprimirane.",
+      "zip.note.tooMany": "Previše datoteka za jednu arhivu ({n}). Koristite „Spremi svaku zasebno”.",
+      "zip.error": "Greška pri pakiranju: {msg}",
+      "term.title": "Ista stvar, u terminalu",
+      "term.sub": "Ovaj demo je web sučelje za isti engine. Za rad na stotinama slika, CLI je brži.",
+      "term.code": '<span class="c"># instalacija</span>\ngit clone https://github.com/Sebwebswiss/imageforge.git\ncd imageforge\npip install -e .\n\n<span class="c"># cijela mapa — pita koji format želite</span>\n<span class="p">$</span> imageforge ./photos\n\n  <span class="p">✓</span>  hero.jpg → hero.webp  89.2 KB  <span class="y">(-96.2%)</span>\n  <span class="p">✓</span>  logo.png → logo.webp  12.4 KB  <span class="y">(-94.1%)</span>\n  <span class="p">✓</span>  team.jpg → team.webp  128.4 KB <span class="y">(-89.7%)</span>\n\n──────────────────────────────────────────────────\n  Summary\n──────────────────────────────────────────────────\n  Converted:  3  │  Skipped:  0  │  Failed:  0\n  Original:   8,450 KB (8.3 MB)\n  Final:      276 KB (0.3 MB)\n  Saved:      8,174 KB (8.0 MB)\n\n<span class="c"># ili eksplicitno, za skripte i CI (bez pitanja)</span>\n<span class="p">$</span> imageforge ./photos --format avif --max-size 100 --recursive\n\n<span class="c"># opcije</span>\n  --format {webp,avif,jpeg,png}   format izvoza\n  -o, --output PATH               izlazna mapa\n  -w, --width PX                  max širina (default 1200)\n  -q, --quality 1-100             kvaliteta (default 80)\n  -s, --max-size KB               ciljana veličina datoteke\n  -r, --recursive                 uključi podmape\n  -f, --force                     konvertuj ponovo postojeće',
+      "feat.title": "Zašto radi",
+      "feat.1h": "Automatska optimizacija veličine",
+      "feat.1p": "Zadate „maksimum 100 KB” i engine spušta kvalitetu, a zatim i dimenzije dok datoteka ne stane. U memoriji, bez privremenih datoteka.",
+      "feat.2h": "EXIF orijentacija",
+      "feat.2p": "Fotografije s telefona više se ne prikazuju rotirane — orijentacija se primjenjuje prije skaliranja.",
+      "feat.3h": "Prozirnost",
+      "feat.3p": "WebP, AVIF i PNG zadržavaju alpha kanal. JPEG nema alpha kanal, pa se slika stavlja na bijelu pozadinu.",
+      "feat.4h": "Batch i rekurzija",
+      "feat.4p": "Cijela struktura mapa u jednoj naredbi. Već obrađene datoteke se preskaču, osim ako ne dodate <code class=\"inline\">--force</code>.",
+      "feat.5h": "Python API",
+      "feat.5p": "<code class=\"inline\">convert_image()</code> i <code class=\"inline\">convert_directory()</code> su obične funkcije — koristite ih u vlastitom kodu.",
+      "feat.6h": "Privatnost po zadanom",
+      "feat.6p": "Ništa ne ide na server. Ovo je demo za browser; CLI radi lokalno na vašem disku.",
+      "footer.by": "ImageForge — pod MIT licencom, autor: Sebastien Zunec",
+      "footer.docs": "Dokumentacija",
+      "msg.processing": "⏳ Obrada {n} datoteka…",
+      "msg.error": "greška",
+      "msg.missed": "cilj {n} KB nije dostignut",
+      "dl.button": "⬇ Preuzmi",
+      "cap.before": "prije",
+      "cap.after": "poslije",
+      "enc.fail": "Browser nije uspio kodirati sliku.",
+      "sample.caption": "generirana testna slika · 1600×1000"
+    }
+  };
+
+  var LANGS = Object.keys(I18N);
+  var lang = "en";
+
+  function t(key, vars) {
+    var s = (I18N[lang] && I18N[lang][key]) || (I18N.en[key]) || key;
+    if (vars) {
+      Object.keys(vars).forEach(function (v) {
+        s = s.split("{" + v + "}").join(vars[v]);
+      });
+    }
+    return s;
+  }
+
+  function applyLang(next) {
+    lang = I18N[next] ? next : "en";
+    try { localStorage.setItem("imageforge:lang", lang); } catch (e) { /* private mode */ }
+
+    document.documentElement.lang = lang;
+    document.title = t("doc.title");
+    var desc = document.querySelector('meta[name="description"]');
+    if (desc) desc.setAttribute("content", t("doc.desc"));
+
+    document.querySelectorAll("[data-i18n]").forEach(function (el) {
+      el.textContent = t(el.dataset.i18n);
+    });
+    document.querySelectorAll("[data-i18n-html]").forEach(function (el) {
+      el.innerHTML = t(el.dataset.i18nHtml);
+    });
+
+    document.querySelectorAll("#langSwitch button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.dataset.lang === lang));
+    });
+
+    if (detected) applySupport();
+    else syncFormat();
+    rerenderResults();
+    updateZipButton();
+  }
+
   var FORMATS = {
-    webp: { mime: "image/webp", ext: "webp", label: "WebP", alpha: true,  hint: "Podržava prozirnost (alpha)" },
-    avif: { mime: "image/avif", ext: "avif", label: "AVIF", alpha: true,  hint: "Podržava prozirnost (alpha). Najbolji omjer, ali kodiranje je sporije." },
-    jpeg: { mime: "image/jpeg", ext: "jpg", label: "JPEG", alpha: false, hint: "Bez prozirnosti — slika se stavlja na bijelu pozadinu." },
-    png:  { mime: "image/png",  ext: "png",  label: "PNG",  alpha: true,  hint: "Bez gubitka kvaliteta. Kvalitet slidera se ignoriše." }
+    webp: { mime: "image/webp", ext: "webp", label: "WebP", alpha: true },
+    avif: { mime: "image/avif", ext: "avif", label: "AVIF", alpha: true },
+    jpeg: { mime: "image/jpeg", ext: "jpg", label: "JPEG", alpha: false },
+    png:  { mime: "image/png",  ext: "png",  label: "PNG",  alpha: true }
   };
 
   var $ = function (id) { return document.getElementById(id); };
@@ -535,7 +719,7 @@ pip install -e .
   }
 
   /* ---- format support detection ---- */
-  var supported = {};
+  var supported = {}, detected = false;
   function detect() {
     var c = document.createElement("canvas");
     c.width = c.height = 8;
@@ -544,7 +728,7 @@ pip install -e .
     keys.forEach(function (k) {
       c.toBlob(function (blob) {
         supported[k] = !!blob && blob.type === FORMATS[k].mime;
-        if (--pending === 0) applySupport();
+        if (--pending === 0) { detected = true; applySupport(); }
       }, FORMATS[k].mime, 0.8);
     });
   }
@@ -561,16 +745,19 @@ pip install -e .
     }
     if (unsupported.length) {
       warn.style.display = "block";
-      warn.textContent = "Ovaj browser ne podržava kodiranje u: " + unsupported.join(", ") + ". Koristi Chrome, Edge ili Firefox 90+.";
+      warn.textContent = t("fmt.warn", { list: unsupported.join(", ") });
+    } else {
+      warn.style.display = "none";
     }
     syncFormat();
   }
   function syncFormat() {
-    var f = FORMATS[$("format").value];
-    $("fmtHint").textContent = f.hint;
+    var key = $("format").value;
+    var f = FORMATS[key];
+    $("fmtHint").textContent = t("fmt.hint." + key);
     var q = $("quality");
     q.disabled = f.ext === "png";
-    $("qualityHint").textContent = f.ext === "png" ? "PNG je bez gubitka — slider je onemogućen" : f.label + " / JPEG";
+    $("qualityHint").textContent = f.ext === "png" ? t("quality.hint.png") : f.label + " / JPEG";
   }
 
   /* ---- canvas helpers ---- */
@@ -624,7 +811,7 @@ pip install -e .
       out = { blob: b, w: c.width, h: c.height, quality: opts.quality };
     }
 
-    if (!out.blob) throw new Error("Browser nije uspio kodirati sliku.");
+    if (!out.blob) throw new Error(t("enc.fail"));
     bitmap.close && bitmap.close();
     return out;
   }
@@ -650,7 +837,8 @@ pip install -e .
     var node = document.createElement("div");
     node.className = "card";
     node.style.marginTop = "16px";
-    node.innerHTML = '<div class="status" style="color:var(--muted)">⏳ Obrada ' + list.length + " datoteka…</div>";
+    node.innerHTML = '<div class="status" style="color:var(--muted)"></div>';
+    node.firstChild.textContent = t("msg.processing", { n: list.length });
     results.prepend(node);
 
     for (var i = 0; i < list.length; i++) {
@@ -690,33 +878,46 @@ pip install -e .
     }
   }
 
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
   async function renderItem(rec, anchor) {
     var pct = rec.blob ? (1 - rec.blob.size / rec.origSize) * 100 : 0;
     var ratioW = rec.blob ? Math.max(2, Math.min(100, (rec.blob.size / rec.origSize) * 100)) : 0;
     var pillClass = rec.error ? "warn" : pct >= 50 ? "good" : pct > 0 ? "warn" : "bad";
-    var pillText = rec.error ? "greška"
+    var pillText = rec.error ? t("msg.error")
       : (pct >= 0 ? "-" + pct.toFixed(1) + "%" : "+" + Math.abs(pct).toFixed(1) + "%");
 
+    var label = rec.name || rec.origName;
     var el = document.createElement("div");
     el.className = "item";
     el.dataset.id = rec.id;
     el.innerHTML =
       '<div class="thumbs">' +
-        '<figure><img src="' + rec.beforeUrl + '" alt="prije"><figcaption>prije</figcaption></figure>' +
-        (rec.blob ? '<figure><img src="' + rec.afterUrl + '" alt="poslije"><figcaption>poslije</figcaption></figure>' : "") +
+        '<figure><img src="' + esc(rec.beforeUrl) + '" alt="' + esc(t("cap.before")) + '">' +
+          '<figcaption>' + esc(t("cap.before")) + "</figcaption></figure>" +
+        (rec.blob
+          ? '<figure><img src="' + esc(rec.afterUrl) + '" alt="' + esc(t("cap.after")) + '">' +
+            "<figcaption>" + esc(t("cap.after")) + "</figcaption></figure>"
+          : "") +
       '</div>' +
       '<div class="meta">' +
-        '<div class="name" title="' + (rec.name || rec.origName) + '">' + (rec.name || rec.origName) + '</div>' +
+        '<div class="name" title="' + esc(label) + '">' + esc(label) + '</div>' +
         (rec.blob
           ? '<div class="dims">' + rec.w + "×" + rec.h + " · " + fmtBytes(rec.origSize) + " → " + fmtBytes(rec.blob.size) +
-            (rec.targetMissed ? ' · <span style="color:var(--amber)">cilj ' + $("maxSize").value + ' KB nije dostignut</span>' : "") + '</div>' +
+            (rec.targetMissed
+              ? ' · <span style="color:var(--amber)">' + esc(t("msg.missed", { n: $("maxSize").value })) + "</span>"
+              : "") + '</div>' +
             '<div class="bar"><i class="after" style="width:' + ratioW + '%"></i></div>'
-          : '<div class="dims" style="color:var(--red)">' + rec.error + '</div>') +
+          : '<div class="dims" style="color:var(--red)">' + esc(rec.error) + "</div>") +
       '</div>' +
       '<div class="actions">' +
         (rec.blob ? '<span class="pill ' + pillClass + '">' + pillText + "</span>" : "") +
-        (rec.blob ? '<button class="btn" data-dl="' + rec.id + '">⬇ Preuzmi</button>' : "") +
-      '</div>';
+        (rec.blob ? '<button class="btn" data-dl="' + esc(rec.id) + '">' + esc(t("dl.button")) + "</button>" : "") +
+      "</div>";
 
     if (anchor && anchor.parentNode) {
       anchor.parentNode.insertBefore(el, anchor);
@@ -724,6 +925,13 @@ pip install -e .
       results.prepend(el);
     }
     return el;
+  }
+
+  /* Re-render every result card, so a language switch updates text in place. */
+  function rerenderResults() {
+    results.innerHTML = "";
+    /* renderItem() prepends, so walk backwards to keep the original order. */
+    items.slice().reverse().forEach(function (rec) { renderItem(rec, null); });
   }
 
   function updateSummary() {
@@ -751,15 +959,14 @@ pip install -e .
     var totalBytes = ok.reduce(function (a, i) { return a + i.blob.size; }, 0);
 
     button.disabled = ok.length === 0 || zipBusy;
-    button.textContent = zipBusy ? "⏳ Pakiranje…" : "🗜 Preuzmi ZIP";
+    button.textContent = zipBusy ? t("zip.busy") : t("zip.download");
 
     if (!ok.length) {
       note.textContent = "";
     } else if (ok.length === 1) {
-      note.textContent = "Jedna slika — koristi „Spremi svaku pojedinačno” ili gumb za preuzimanje uz sliku.";
+      note.textContent = t("zip.note.one");
     } else {
-      note.textContent = "ZIP sadrži " + ok.length + " datoteka, ukupno " + fmtBytes(totalBytes) +
-        ". Arhiva se pakuje bez ponovne kompresije jer su slike već komprimirane.";
+      note.textContent = t("zip.note.many", { n: ok.length, total: fmtBytes(totalBytes) });
     }
   }
 
@@ -779,7 +986,7 @@ pip install -e .
     if (!ok.length) return;
 
     if (ok.length > 65535) {
-      $("zipNote").textContent = "Previše datoteka za jednu arhivu (" + ok.length + "). Koristi „Spremi svaku pojedinačno”.";
+      $("zipNote").textContent = t("zip.note.tooMany", { n: ok.length });
       return;
     }
 
@@ -803,7 +1010,7 @@ pip install -e .
       a.remove();
       setTimeout(function () { URL.revokeObjectURL(url); }, 20000);
     } catch (err) {
-      $("zipNote").textContent = "Greška pri pakiranju: " + (err && err.message ? err.message : err);
+      $("zipNote").textContent = t("zip.error", { msg: err && err.message ? err.message : err });
     } finally {
       zipBusy = false;
       updateZipButton();
@@ -901,7 +1108,7 @@ pip install -e .
     x.fillText("ImageForge", 90, 520);
     x.fillStyle = "rgba(255,255,255,.62)";
     x.font = "400 38px -apple-system, Segoe UI, Roboto, sans-serif";
-    x.fillText("generirana testna slika · 1600×1000", 92, 590);
+    x.fillText(t("sample.caption"), 92, 590);
     return new Promise(function (res) {
       c.toBlob(function (b) { res(new File([b], "sample-1600x1000.png", { type: "image/png" })); }, "image/png");
     });
@@ -909,8 +1116,8 @@ pip install -e .
 
   $("drop").insertAdjacentHTML("beforeend",
     '<div class="drop-actions">' +
-      '<button class="btn" id="genSample">✨ Generiraj testnu sliku</button>' +
-      '<button class="btn" id="pickFolder">📁 Odaberi mapu</button>' +
+      '<button class="btn" id="genSample" data-i18n="drop.sample">✨ Generate a test image</button>' +
+      '<button class="btn" id="pickFolder" data-i18n="drop.folder">📁 Choose a folder</button>' +
     '</div>');
 
   $("genSample").addEventListener("click", function (e) {
@@ -922,9 +1129,16 @@ pip install -e .
     $("folderPicker").click();
   });
 
+  $("langSwitch").addEventListener("click", function (e) {
+    var btn = e.target.closest("button[data-lang]");
+    if (btn) applyLang(btn.dataset.lang);
+  });
+
+  var stored = null;
+  try { stored = localStorage.getItem("imageforge:lang"); } catch (e) { /* private mode */ }
+
   detect();
-  syncFormat();
-  updateZipButton();
+  applyLang(stored && I18N[stored] ? stored : "en");
 })();
 </script>
 </body>
